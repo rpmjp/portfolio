@@ -1,15 +1,16 @@
+import NeuralHero from "./components/NeuralHero";
+
 export default function Home() {
   return (
-    <main
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: "var(--bg-canvas)", color: "var(--fg-default)" }}
-    >
-      <div className="text-center">
-        <h1 className="text-2xl font-medium mb-2">Robert Jean Pierre</h1>
-        <p className="text-sm" style={{ color: "var(--fg-muted)" }}>
-          Portfolio under construction.
-        </p>
+    <div className="px-8 py-12 max-w-5xl mx-auto">
+      <div className="text-[11px] uppercase tracking-wider mb-2 font-medium" style={{ color: "var(--accent-fg)" }}>
+        / portfolio
       </div>
-    </main>
+      <div className="text-[15px] mb-10" style={{ color: "var(--fg-muted)" }}>
+        a feed-forward network, but the signal is me
+      </div>
+
+      <NeuralHero />
+    </div>
   );
 }
