@@ -9,7 +9,7 @@ export default function TopBar() {
         borderColor: "var(--border-muted)",
       }}
     >
-      <div className="flex items-center gap-3">
+      <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" style={{ textDecoration: "none" }}>
         <div
           className="w-5 h-5 rounded-full"
           style={{ background: "var(--fg-default)" }}
@@ -24,7 +24,7 @@ export default function TopBar() {
             portfolio
           </span>
         </div>
-      </div>
+      </Link>
 
       <div className="flex-1 max-w-xs ml-4">
         <div

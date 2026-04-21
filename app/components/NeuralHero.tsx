@@ -12,17 +12,18 @@ type Project = {
   tipLabel: string;
   tipBody: string;
   href: string;
+  updatedAgo: string;
 };
 
 const projectsBySchool: Record<Education, Project[]> = {
   njit: [
-    { id: "churn", label: "Churn", tipLabel: "flagship project", tipBody: "Telecom churn MLOps pipeline. FastAPI, Docker, AWS, drift monitoring.", href: "/projects/telecom-churn-ml" },
-    { id: "rag", label: "RAG", tipLabel: "project", tipBody: "RAG research assistant. Vector DB, eval harness, fine-tuned small model.", href: "/projects/rag-research-assistant" },
-    { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study" },
+    { id: "churn", label: "Churn", tipLabel: "flagship project", tipBody: "Telecom churn MLOps pipeline. FastAPI, Docker, AWS, drift monitoring.", href: "/projects/telecom-churn-ml", updatedAgo: "3 days ago" },
+    { id: "rag", label: "RAG", tipLabel: "project", tipBody: "RAG research assistant. Vector DB, eval harness, fine-tuned small model.", href: "/projects/rag-research-assistant", updatedAgo: "2 days ago" },
+    { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
   ],
   rutgers: [
-    { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Real-time retail analytics with Kafka and Spark Streaming.", href: "/projects/retail-stream-analytics" },
-    { id: "rec", label: "Rec", tipLabel: "project", tipBody: "Recommendation system. Two-tower model and CTR prediction.", href: "/projects/rec-system-ctr" },
+    { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Real-time retail analytics with Kafka and Spark Streaming.", href: "/projects/retail-stream-analytics", updatedAgo: "5 months ago" },
+    { id: "rec", label: "Rec", tipLabel: "project", tipBody: "Recommendation system. Two-tower model and CTR prediction.", href: "/projects/rec-system-ctr", updatedAgo: "6 months ago" },
   ],
 };
 
@@ -33,19 +34,21 @@ const schoolInfo: Record<Education, { label: string; tipLabel: string; tipBody: 
 
 const POS = {
   rjpStage1: { x: 100, y: 220 },
-  schoolStage1Njit: { x: 450, y: 160 },
-  schoolStage1Rutgers: { x: 450, y: 280 },
-  schoolAnchorStage2: { x: 180, y: 220 },
-  projectX: 560,
-  outputX: 800,
+  schoolStage1Njit: { x: 460, y: 150 },
+  schoolStage1Rutgers: { x: 460, y: 290 },
+  schoolAnchorStage2: { x: 200, y: 220 },
+  projectX: 580,
+  outputX: 810,
   outputY: 220,
 };
 
 const R = {
-  hero: 44,
-  mid: 36,
-  project: 36,
+  hero: 52,
+  mid: 44,
+  project: 44,
 };
+
+const mostRecent = projectsBySchool.njit.reduce((acc, p) => (p.updatedAgo.includes("day") && (!acc || p.updatedAgo < acc.updatedAgo) ? p : acc), null as Project | null) ?? projectsBySchool.njit[0];
 
 export default function NeuralHero() {
   const [stage, setStage] = useState<Stage>(0);
@@ -124,7 +127,18 @@ export default function NeuralHero() {
   const schoolAnchorPos = selectedSchool ? POS.schoolAnchorStage2 : POS.schoolStage1Njit;
 
   return (
-    <div className="w-full mx-auto" style={{ maxWidth: "min(100%, 960px)" }}>
+    <div className="w-full mx-auto" style={{ maxWidth: "min(100%, 1020px)" }}>
+      <div
+        className="mb-4 text-[12px] flex items-center gap-2"
+        style={{ color: "var(--fg-muted)" }}
+      >
+        <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "var(--success-fg)" }} />
+        <span style={{ color: "var(--fg-subtle)" }}>Recently updated:</span>
+        <span style={{ color: "var(--fg-default)" }}>{mostRecent.id === "churn" ? "telecom-churn-ml" : mostRecent.id === "rag" ? "rag-research-assistant" : mostRecent.id}</span>
+        <span>·</span>
+        <span>{mostRecent.updatedAgo}</span>
+      </div>
+
       <div className="relative min-h-[32px] mb-3 flex items-center">
         {stage > 0 && (
           <button
@@ -150,11 +164,11 @@ export default function NeuralHero() {
       <div
         className="relative w-full"
         style={{
-          aspectRatio: "900 / 440",
-          minHeight: 320,
+          aspectRatio: "900 / 460",
+          minHeight: 360,
         }}
       >
-        <svg viewBox="0 0 900 440" className="w-full h-full block" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 900 460" className="w-full h-full block" preserveAspectRatio="xMidYMid meet">
 
           <defs>
             <radialGradient id="pulseBlue" cx="50%" cy="50%" r="50%">
@@ -171,19 +185,36 @@ export default function NeuralHero() {
 
           {stage === 1 && (
             <g>
-              <line x1={POS.rjpStage1.x} y1={POS.rjpStage1.y} x2={POS.schoolStage1Njit.x} y2={POS.schoolStage1Njit.y} stroke={hoveredId === "njit" ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={hoveredId === "njit" ? 1.75 : 1.25} opacity={hoveredId === "njit" ? 0.9 : 0.55} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
-              <line x1={POS.rjpStage1.x} y1={POS.rjpStage1.y} x2={POS.schoolStage1Rutgers.x} y2={POS.schoolStage1Rutgers.y} stroke={hoveredId === "rutgers" ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={hoveredId === "rutgers" ? 1.75 : 1.25} opacity={hoveredId === "rutgers" ? 0.9 : 0.55} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
+              <line x1={POS.rjpStage1.x} y1={POS.rjpStage1.y} x2={POS.schoolStage1Njit.x} y2={POS.schoolStage1Njit.y} stroke={hoveredId === "njit" ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={hoveredId === "njit" ? 2 : 1.25} opacity={hoveredId === "njit" ? 0.9 : 0.55} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
+              {hoveredId === "njit" && (
+                <circle r={4} fill="var(--accent-fg)">
+                  <animateMotion dur="1.2s" repeatCount="indefinite" path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.schoolStage1Njit.x},${POS.schoolStage1Njit.y}`} />
+                </circle>
+              )}
+              <line x1={POS.rjpStage1.x} y1={POS.rjpStage1.y} x2={POS.schoolStage1Rutgers.x} y2={POS.schoolStage1Rutgers.y} stroke={hoveredId === "rutgers" ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={hoveredId === "rutgers" ? 2 : 1.25} opacity={hoveredId === "rutgers" ? 0.9 : 0.55} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
+              {hoveredId === "rutgers" && (
+                <circle r={4} fill="var(--accent-fg)">
+                  <animateMotion dur="1.2s" repeatCount="indefinite" path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.schoolStage1Rutgers.x},${POS.schoolStage1Rutgers.y}`} />
+                </circle>
+              )}
             </g>
           )}
 
           {stage === 2 && selectedSchool && (
             <g>
               {currentProjects.map((p, i) => {
-                const spacing = 440 / (currentProjects.length + 1);
+                const spacing = 460 / (currentProjects.length + 1);
                 const py = spacing * (i + 1);
                 const isHovered = hoveredId === p.id;
                 return (
-                  <line key={`edge-${p.id}`} x1={schoolAnchorPos.x} y1={schoolAnchorPos.y} x2={POS.projectX} y2={py} stroke={isHovered ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={isHovered ? 1.75 : 1.25} opacity={isHovered ? 0.95 : 0.5} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
+                  <g key={`edge-${p.id}`}>
+                    <line x1={schoolAnchorPos.x} y1={schoolAnchorPos.y} x2={POS.projectX} y2={py} stroke={isHovered ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={isHovered ? 2 : 1.25} opacity={isHovered ? 0.95 : 0.5} style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }} />
+                    {isHovered && (
+                      <circle r={4} fill="var(--accent-fg)">
+                        <animateMotion dur="1.2s" repeatCount="indefinite" path={`M${schoolAnchorPos.x},${schoolAnchorPos.y} L${POS.projectX},${py}`} />
+                      </circle>
+                    )}
+                  </g>
                 );
               })}
             </g>
@@ -195,13 +226,13 @@ export default function NeuralHero() {
             onMouseEnter={handleRjpHover}
           >
             {stage === 0 && (
-              <circle cx={POS.rjpStage1.x} cy={POS.rjpStage1.y} r={R.hero + 22} fill="url(#pulseBlue)">
-                <animate attributeName="r" values={`${R.hero + 8};${R.hero + 28};${R.hero + 8}`} dur="2.4s" repeatCount="indefinite" />
+              <circle cx={POS.rjpStage1.x} cy={POS.rjpStage1.y} r={R.hero + 26} fill="url(#pulseBlue)">
+                <animate attributeName="r" values={`${R.hero + 10};${R.hero + 32};${R.hero + 10}`} dur="2.4s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="0.55;0.15;0.55" dur="2.4s" repeatCount="indefinite" />
               </circle>
             )}
-            <circle cx={POS.rjpStage1.x} cy={POS.rjpStage1.y} r={R.hero} fill="var(--accent-bg)" stroke="var(--accent-fg)" strokeWidth={2} />
-            <text x={POS.rjpStage1.x} y={POS.rjpStage1.y + 7} textAnchor="middle" fill="var(--fg-default)" fontSize={18} fontWeight={500}>RJP</text>
+            <circle cx={POS.rjpStage1.x} cy={POS.rjpStage1.y} r={R.hero} fill="var(--accent-bg)" stroke="var(--accent-fg)" strokeWidth={2.5} />
+            <text x={POS.rjpStage1.x} y={POS.rjpStage1.y + 8} textAnchor="middle" fill="var(--fg-default)" fontSize={22} fontWeight={500}>RJP</text>
           </g>
 
           <g
@@ -217,15 +248,15 @@ export default function NeuralHero() {
               r={R.mid}
               fill="var(--bg-canvas)"
               stroke={hoveredId === "njit" || (stage === 2 && selectedSchool === "njit") ? "var(--accent-fg)" : "var(--border-default)"}
-              strokeWidth={hoveredId === "njit" || (stage === 2 && selectedSchool === "njit") ? 2 : 1.25}
+              strokeWidth={hoveredId === "njit" || (stage === 2 && selectedSchool === "njit") ? 2.5 : 1.5}
               style={{ transition: "cx 0.6s cubic-bezier(0.4,0,0.2,1), cy 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.2s, stroke-width 0.2s" }}
             />
             <text
               x={njitPos.x}
-              y={njitPos.y + 6}
+              y={njitPos.y + 7}
               textAnchor="middle"
               fill="var(--fg-default)"
-              fontSize={16}
+              fontSize={19}
               fontWeight={stage === 2 && selectedSchool === "njit" ? 500 : 400}
               style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1), y 0.6s cubic-bezier(0.4,0,0.2,1)" }}
             >
@@ -246,15 +277,15 @@ export default function NeuralHero() {
               r={R.mid}
               fill="var(--bg-canvas)"
               stroke={hoveredId === "rutgers" || (stage === 2 && selectedSchool === "rutgers") ? "var(--accent-fg)" : "var(--border-default)"}
-              strokeWidth={hoveredId === "rutgers" || (stage === 2 && selectedSchool === "rutgers") ? 2 : 1.25}
+              strokeWidth={hoveredId === "rutgers" || (stage === 2 && selectedSchool === "rutgers") ? 2.5 : 1.5}
               style={{ transition: "cx 0.6s cubic-bezier(0.4,0,0.2,1), cy 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.2s, stroke-width 0.2s" }}
             />
             <text
               x={rutgersPos.x}
-              y={rutgersPos.y + 6}
+              y={rutgersPos.y + 7}
               textAnchor="middle"
               fill="var(--fg-default)"
-              fontSize={14}
+              fontSize={16}
               fontWeight={stage === 2 && selectedSchool === "rutgers" ? 500 : 400}
               style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1), y 0.6s cubic-bezier(0.4,0,0.2,1)" }}
             >
@@ -265,7 +296,7 @@ export default function NeuralHero() {
           {stage === 2 && selectedSchool && (
             <g>
               {currentProjects.map((p, i) => {
-                const spacing = 440 / (currentProjects.length + 1);
+                const spacing = 460 / (currentProjects.length + 1);
                 const py = spacing * (i + 1);
                 const isHovered = hoveredId === p.id;
                 return (
@@ -276,8 +307,8 @@ export default function NeuralHero() {
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() => handleProjectClick(p)}
                   >
-                    <circle cx={POS.projectX} cy={py} r={R.project} fill="var(--bg-canvas)" stroke={isHovered ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={isHovered ? 2 : 1.25} style={{ transition: "stroke 0.2s, stroke-width 0.2s" }} />
-                    <text x={POS.projectX} y={py + 6} textAnchor="middle" fill="var(--fg-default)" fontSize={15}>{p.label}</text>
+                    <circle cx={POS.projectX} cy={py} r={R.project} fill="var(--bg-canvas)" stroke={isHovered ? "var(--accent-fg)" : "var(--border-default)"} strokeWidth={isHovered ? 2.5 : 1.5} style={{ transition: "stroke 0.2s, stroke-width 0.2s" }} />
+                    <text x={POS.projectX} y={py + 7} textAnchor="middle" fill="var(--fg-default)" fontSize={18}>{p.label}</text>
                   </g>
                 );
               })}
@@ -285,20 +316,20 @@ export default function NeuralHero() {
           )}
 
           <g style={{ cursor: "pointer" }} onClick={handleOutputClick}>
-            <circle cx={POS.outputX} cy={POS.outputY} r={R.hero + 14} fill="url(#pulseGreen)" opacity={0.7}>
-              <animate attributeName="r" values={`${R.hero + 4};${R.hero + 20};${R.hero + 4}`} dur="2.8s" repeatCount="indefinite" />
+            <circle cx={POS.outputX} cy={POS.outputY} r={R.hero + 16} fill="url(#pulseGreen)" opacity={0.7}>
+              <animate attributeName="r" values={`${R.hero + 6};${R.hero + 24};${R.hero + 6}`} dur="2.8s" repeatCount="indefinite" />
               <animate attributeName="opacity" values="0.45;0.1;0.45" dur="2.8s" repeatCount="indefinite" />
             </circle>
-            <circle cx={POS.outputX} cy={POS.outputY} r={R.hero} fill="var(--success-bg)" stroke="var(--success-fg)" strokeWidth={2} />
-            <text x={POS.outputX} y={POS.outputY - 4} textAnchor="middle" fill="var(--fg-default)" fontSize={13} fontWeight={500}>Open</text>
-            <text x={POS.outputX} y={POS.outputY + 12} textAnchor="middle" fill="var(--fg-default)" fontSize={13} fontWeight={500}>to work</text>
+            <circle cx={POS.outputX} cy={POS.outputY} r={R.hero} fill="var(--success-bg)" stroke="var(--success-fg)" strokeWidth={2.5} />
+            <text x={POS.outputX} y={POS.outputY - 4} textAnchor="middle" fill="var(--fg-default)" fontSize={15} fontWeight={500}>Open</text>
+            <text x={POS.outputX} y={POS.outputY + 14} textAnchor="middle" fill="var(--fg-default)" fontSize={15} fontWeight={500}>to work</text>
           </g>
 
-          <g fontSize="12" fill="var(--fg-subtle)" fontWeight={500}>
-            <text x={100} y={410} textAnchor="middle" opacity={stage === 2 ? 0.3 : 1} style={{ transition: "opacity 0.5s" }}>input</text>
-            <text x={stage === 2 ? POS.schoolAnchorStage2.x : POS.schoolStage1Njit.x} y={410} textAnchor="middle" opacity={stage === 0 ? 0 : 1} style={{ transition: "opacity 0.5s, x 0.6s cubic-bezier(0.4,0,0.2,1)" }}>{stage === 2 ? schoolInfo[selectedSchool!].label.toLowerCase() : "education"}</text>
-            <text x={POS.projectX} y={410} textAnchor="middle" opacity={stage === 2 ? 1 : 0} style={{ transition: "opacity 0.5s" }}>projects</text>
-            <text x={POS.outputX} y={410} textAnchor="middle">output</text>
+          <g fontSize="13" fill="var(--fg-subtle)" fontWeight={500}>
+            <text x={100} y={430} textAnchor="middle" opacity={stage === 2 ? 0.3 : 1} style={{ transition: "opacity 0.5s" }}>input</text>
+            <text x={stage === 2 ? POS.schoolAnchorStage2.x : POS.schoolStage1Njit.x} y={430} textAnchor="middle" opacity={stage === 0 ? 0 : 1} style={{ transition: "opacity 0.5s, x 0.6s cubic-bezier(0.4,0,0.2,1)" }}>{stage === 2 ? schoolInfo[selectedSchool!].label.toLowerCase() : "education"}</text>
+            <text x={POS.projectX} y={430} textAnchor="middle" opacity={stage === 2 ? 1 : 0} style={{ transition: "opacity 0.5s" }}>projects</text>
+            <text x={POS.outputX} y={430} textAnchor="middle">output</text>
           </g>
         </svg>
       </div>
