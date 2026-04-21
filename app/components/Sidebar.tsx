@@ -1,4 +1,12 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { projects } from "../lib/projects";
+
 export default function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside
       className="w-60 flex-shrink-0 border-r px-4 py-5 flex flex-col gap-5"
@@ -7,7 +15,6 @@ export default function Sidebar() {
         borderColor: "var(--border-muted)",
       }}
     >
-      {/* Profile block */}
       <div>
         <div
           className="w-20 h-20 rounded-full mb-3 flex items-center justify-center text-2xl font-medium"
@@ -31,7 +38,6 @@ export default function Sidebar() {
         </p>
       </div>
 
-      {/* Profile metadata */}
       <div className="flex flex-col gap-1.5 text-xs" style={{ color: "var(--fg-muted)" }}>
         <div className="flex items-center gap-2">
           <span>📍</span>
@@ -51,7 +57,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Open to work badge */}
       <div
         className="text-[11px] px-2 py-1 rounded-md inline-flex items-center gap-1.5 self-start"
         style={{
@@ -64,7 +69,6 @@ export default function Sidebar() {
         Open to work
       </div>
 
-      {/* Projects file tree */}
       <div className="border-t pt-4" style={{ borderColor: "var(--border-muted)" }}>
         <div
           className="text-[11px] uppercase tracking-wider font-medium mb-2"
@@ -73,42 +77,41 @@ export default function Sidebar() {
           Projects
         </div>
         <div className="flex flex-col gap-px">
-          <FolderRow name="telecom-churn-ml" active />
-          <FolderRow name="rag-research-assistant" />
-          <FolderRow name="swin-transformer-study" />
-          <FolderRow name="retail-stream-analytics" />
-          <FolderRow name="rec-system-ctr" />
-          <FolderRow name="archive" muted />
+          {projects.map((project) => {
+            const href = `/projects/${project.slug}`;
+            const active = pathname === href;
+            return (
+              <Link
+                key={project.slug}
+                href={href}
+                className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px] cursor-pointer hover:opacity-90 transition-opacity"
+                style={{
+                  background: active ? "var(--accent-bg)" : "transparent",
+                  borderLeft: active ? "2px solid var(--accent-fg)" : "2px solid transparent",
+                  color: "var(--fg-default)",
+                  fontWeight: active ? 500 : 400,
+                  textDecoration: "none",
+                }}
+              >
+                <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>▸</span>
+                <span style={{ color: "var(--fg-muted)" }}>📁</span>
+                <span>{project.name}</span>
+              </Link>
+            );
+          })}
+          <div
+            className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px]"
+            style={{
+              borderLeft: "2px solid transparent",
+              color: "var(--fg-muted)",
+            }}
+          >
+            <span className="text-[10px]">▸</span>
+            <span>📁</span>
+            <span>archive</span>
+          </div>
         </div>
       </div>
     </aside>
-  );
-}
-
-function FolderRow({
-  name,
-  active = false,
-  muted = false,
-}: {
-  name: string;
-  active?: boolean;
-  muted?: boolean;
-}) {
-  return (
-    <div
-      className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px] cursor-pointer"
-      style={{
-        background: active ? "var(--accent-bg)" : "transparent",
-        borderLeft: active ? "2px solid var(--accent-fg)" : "2px solid transparent",
-        color: muted ? "var(--fg-muted)" : "var(--fg-default)",
-        fontWeight: active ? 500 : 400,
-      }}
-    >
-      <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>
-        ▸
-      </span>
-      <span style={{ color: "var(--fg-muted)" }}>📁</span>
-      <span>{name}</span>
-    </div>
   );
 }
