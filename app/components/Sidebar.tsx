@@ -3,60 +3,89 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { MapPin, GraduationCap, Briefcase, Mail } from "lucide-react";
+import { MapPin, GraduationCap, Briefcase, Mail, X } from "lucide-react";
 import { projects } from "../lib/projects";
 
-export default function Sidebar() {
+type SidebarProps = {
+  isOpen?: boolean;
+  onClose?: () => void;
+  isMobile?: boolean;
+};
+
+export default function Sidebar({ isOpen = true, onClose, isMobile = false }: SidebarProps) {
   const pathname = usePathname();
 
+  const handleLinkClick = () => {
+    if (isMobile && onClose) onClose();
+  };
+
   return (
-    <aside className="w-60 flex-shrink-0 border-r px-4 py-5 flex flex-col gap-5" style={{ background: "var(--bg-canvas)", borderColor: "var(--border-muted)" }}>
-      <Link href="/" className="block hover:opacity-90 transition-opacity" style={{ textDecoration: "none" }}>
-        <div className="w-24 h-24 rounded-full mb-3 overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
-          <Image src="/avatar.png" alt="Robert Jean Pierre" width={96} height={96} className="w-full h-full object-cover" priority />
+    <>
+      {isMobile && isOpen && (
+        <div className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.5)" }} onClick={onClose} aria-hidden />
+      )}
+
+      <aside
+        className={`${isMobile ? "fixed left-0 top-0 bottom-0 z-50 transition-transform duration-300 overflow-y-auto" : ""} w-60 flex-shrink-0 border-r px-4 py-5 flex flex-col gap-5`}
+        style={{
+          background: "var(--bg-canvas)",
+          borderColor: "var(--border-muted)",
+          transform: isMobile ? (isOpen ? "translateX(0)" : "translateX(-100%)") : undefined,
+        }}
+      >
+        {isMobile && (
+          <button onClick={onClose} className="self-end p-1 rounded-md hover:opacity-80" aria-label="Close sidebar" style={{ color: "var(--fg-muted)" }}>
+            <X size={18} />
+          </button>
+        )}
+
+        <Link href="/" onClick={handleLinkClick} className="block hover:opacity-90 transition-opacity" style={{ textDecoration: "none" }}>
+          <div className="w-24 h-24 rounded-full mb-3 overflow-hidden" style={{ border: "1px solid var(--border-default)" }}>
+            <Image src="/avatar.png" alt="Robert Jean Pierre" width={96} height={96} className="w-full h-full object-cover" priority />
+          </div>
+          <div className="text-lg font-medium" style={{ color: "var(--fg-default)" }}>Robert Jean Pierre</div>
+          <div className="text-sm" style={{ color: "var(--fg-muted)" }}>rpmjp</div>
+          <p className="text-[13px] mt-2.5 leading-relaxed" style={{ color: "var(--fg-default)" }}>ML engineer building production systems. NJIT CS &apos;26.</p>
+        </Link>
+
+        <div className="flex flex-col gap-2 text-[13px]">
+          <SidebarItem icon={<MapPin size={14} />} text="North Brunswick, NJ" />
+          <SidebarItem icon={<GraduationCap size={14} />} text="NJIT · Rutgers" />
+          <SidebarItem icon={<Briefcase size={14} />} text="Previously Verizon" />
+          <SidebarLink icon={<Mail size={14} />} text="robertjp@live.com" href="mailto:robertjp@live.com" />
+          <SidebarLink icon={<LinkedInIcon />} text="in/rpmjp" href="https://linkedin.com/in/rpmjp" external />
+          <SidebarLink icon={<GitHubIcon />} text="rpmjp" href="https://github.com/rpmjp" external />
+          <SidebarLink icon={<KaggleIcon />} text="robertmcs" href="https://www.kaggle.com/robertmcs" external />
         </div>
-        <div className="text-lg font-medium" style={{ color: "var(--fg-default)" }}>Robert Jean Pierre</div>
-        <div className="text-sm" style={{ color: "var(--fg-muted)" }}>rpmjp</div>
-        <p className="text-[13px] mt-2.5 leading-relaxed" style={{ color: "var(--fg-default)" }}>ML engineer building production systems. NJIT CS &apos;26.</p>
-      </Link>
 
-      <div className="flex flex-col gap-2 text-[13px]">
-        <SidebarItem icon={<MapPin size={14} />} text="North Brunswick, NJ" />
-        <SidebarItem icon={<GraduationCap size={14} />} text="NJIT · Rutgers" />
-        <SidebarItem icon={<Briefcase size={14} />} text="Previously Verizon" />
-        <SidebarLink icon={<Mail size={14} />} text="robertjp@live.com" href="mailto:robertjp@live.com" />
-        <SidebarLink icon={<LinkedInIcon />} text="in/rpmjp" href="https://linkedin.com/in/rpmjp" external />
-        <SidebarLink icon={<GitHubIcon />} text="rpmjp" href="https://github.com/rpmjp" external />
-        <SidebarLink icon={<KaggleIcon />} text="robertmcs" href="https://www.kaggle.com/robertmcs" external />
-      </div>
+        <div className="text-[11px] px-2 py-1 rounded-md inline-flex items-center gap-1.5 self-start" style={{ background: "var(--success-bg)", color: "var(--success-fg)", border: "1px solid var(--success-fg)" }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--success-fg)" }} />
+          Open to work
+        </div>
 
-      <div className="text-[11px] px-2 py-1 rounded-md inline-flex items-center gap-1.5 self-start" style={{ background: "var(--success-bg)", color: "var(--success-fg)", border: "1px solid var(--success-fg)" }}>
-        <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--success-fg)" }} />
-        Open to work
-      </div>
-
-      <div className="border-t pt-4" style={{ borderColor: "var(--border-muted)" }}>
-        <div className="text-[11px] uppercase tracking-wider font-medium mb-2" style={{ color: "var(--fg-muted)" }}>Projects</div>
-        <div className="flex flex-col gap-px">
-          {projects.map((project) => {
-            const href = `/projects/${project.slug}`;
-            const active = pathname === href;
-            return (
-              <Link key={project.slug} href={href} className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px] cursor-pointer hover:opacity-90 transition-opacity" style={{ background: active ? "var(--accent-bg)" : "transparent", borderLeft: active ? "2px solid var(--accent-fg)" : "2px solid transparent", color: "var(--fg-default)", fontWeight: active ? 500 : 400, textDecoration: "none" }}>
-                <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>▸</span>
-                <span style={{ color: "var(--fg-muted)" }}>📁</span>
-                <span>{project.name}</span>
-              </Link>
-            );
-          })}
-          <div className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px]" style={{ borderLeft: "2px solid transparent", color: "var(--fg-muted)" }}>
-            <span className="text-[10px]">▸</span>
-            <span>📁</span>
-            <span>archive</span>
+        <div className="border-t pt-4" style={{ borderColor: "var(--border-muted)" }}>
+          <div className="text-[11px] uppercase tracking-wider font-medium mb-2" style={{ color: "var(--fg-muted)" }}>Projects</div>
+          <div className="flex flex-col gap-px">
+            {projects.map((project) => {
+              const href = `/projects/${project.slug}`;
+              const active = pathname === href;
+              return (
+                <Link key={project.slug} href={href} onClick={handleLinkClick} className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px] cursor-pointer hover:opacity-90 transition-opacity" style={{ background: active ? "var(--accent-bg)" : "transparent", borderLeft: active ? "2px solid var(--accent-fg)" : "2px solid transparent", color: "var(--fg-default)", fontWeight: active ? 500 : 400, textDecoration: "none" }}>
+                  <span className="text-[10px]" style={{ color: "var(--fg-muted)" }}>▸</span>
+                  <span style={{ color: "var(--fg-muted)" }}>📁</span>
+                  <span>{project.name}</span>
+                </Link>
+              );
+            })}
+            <div className="flex items-center gap-2 px-2 py-1 rounded-md text-[13px]" style={{ borderLeft: "2px solid transparent", color: "var(--fg-muted)" }}>
+              <span className="text-[10px]">▸</span>
+              <span>📁</span>
+              <span>archive</span>
+            </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }
 

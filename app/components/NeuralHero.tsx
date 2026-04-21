@@ -128,17 +128,6 @@ export default function NeuralHero() {
 
   return (
     <div className="w-full mx-auto" style={{ maxWidth: "min(100%, 1020px)" }}>
-      <div
-        className="mb-4 text-[12px] flex items-center gap-2"
-        style={{ color: "var(--fg-muted)" }}
-      >
-        <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "var(--success-fg)" }} />
-        <span style={{ color: "var(--fg-subtle)" }}>Recently updated:</span>
-        <span style={{ color: "var(--fg-default)" }}>{mostRecent.id === "churn" ? "telecom-churn-ml" : mostRecent.id === "rag" ? "rag-research-assistant" : mostRecent.id}</span>
-        <span>·</span>
-        <span>{mostRecent.updatedAgo}</span>
-      </div>
-
       <div className="relative min-h-[32px] mb-3 flex items-center">
         {stage > 0 && (
           <button
