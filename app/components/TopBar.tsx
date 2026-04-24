@@ -40,6 +40,7 @@ export default function TopBar({ onMenuClick, showMenuButton = false }: TopBarPr
           Resume
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--success-fg)" }} aria-label="Recently updated" />
         </a>
+        <Link href="/contact" className="hover:opacity-80 transition-opacity" style={{ color: "var(--fg-default)" }}>Contact</Link>
       </nav>
     </header>
   );

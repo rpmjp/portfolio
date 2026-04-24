@@ -26,7 +26,7 @@ export default function AboutPage() {
       <h1 className="text-[22px] font-medium mb-5" style={{ color: "var(--fg-default)" }}>About</h1>
 
       <p className="text-[15px] font-medium leading-relaxed mb-4" style={{ color: "var(--fg-default)" }}>
-        Fifteen years of writing code. Seven years running sales campaigns with data. Now building ML systems.
+        Fifteen years of code. Seven years of analytics leadership. Graduate research in AI and ML. Looking for data, full-stack, or software engineering roles.
       </p>
 
       <blockquote className="mb-8 pl-4 italic text-sm leading-relaxed" style={{ color: "var(--fg-muted)", borderLeft: "2px solid var(--border-default)" }}>
@@ -84,7 +84,7 @@ export default function AboutPage() {
 
       <Section title="Get in touch">
         <p className="mb-4">
-          I am actively interviewing for Data Scientist, ML Engineer, and Applied ML roles starting summer 2026. If you are hiring, or you want to talk shop about ML in production, reach out.
+          I am actively interviewing for roles across data, full-stack, software engineering, and AI/ML starting summer 2026. If you are hiring, or you want to talk shop about analytics, engineering, or ML, reach out.
         </p>
         <div className="flex flex-wrap gap-2">
           <a href="mailto:robertjp@live.com" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-[13px] font-medium transition-opacity hover:opacity-90" style={{ background: "var(--accent-fg)", color: "#ffffff", textDecoration: "none" }}>
