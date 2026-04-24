@@ -34,7 +34,7 @@ export default function TopBar({ onMenuClick, showMenuButton = false }: TopBarPr
       </div>
 
       <nav className="flex gap-3 sm:gap-5 ml-auto text-[13px]">
-        <Link href="/" className="hover:opacity-80 transition-opacity" style={{ color: "var(--fg-default)" }}>Projects</Link>
+        <Link href="/projects" className="hover:opacity-80 transition-opacity" style={{ color: "var(--fg-default)" }}>Projects</Link>
         <Link href="/about" className="hover:opacity-80 transition-opacity hidden sm:inline" style={{ color: "var(--fg-default)" }}>About</Link>
         <a href="/resume.pdf" className="hover:opacity-80 transition-opacity flex items-center gap-1.5" style={{ color: "var(--fg-default)" }}>
           Resume

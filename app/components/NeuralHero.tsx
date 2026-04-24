@@ -17,13 +17,12 @@ type Project = {
 
 const projectsBySchool: Record<Education, Project[]> = {
   njit: [
-    { id: "churn", label: "Churn", tipLabel: "flagship project", tipBody: "Telecom churn MLOps pipeline. FastAPI, Docker, AWS, drift monitoring.", href: "/projects/telecom-churn-ml", updatedAgo: "3 days ago" },
-    { id: "rag", label: "RAG", tipLabel: "project", tipBody: "RAG research assistant. Vector DB, eval harness, fine-tuned small model.", href: "/projects/rag-research-assistant", updatedAgo: "2 days ago" },
+    { id: "sms", label: "SMS", tipLabel: "flagship project", tipBody: "AI-powered Student Management System. Java, SQL, REST, ML predictions, Docker, AWS.", href: "/projects/student-management-system", updatedAgo: "in progress" },
     { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
   ],
   rutgers: [
-    { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Real-time retail analytics with Kafka and Spark Streaming.", href: "/projects/retail-stream-analytics", updatedAgo: "5 months ago" },
-    { id: "rec", label: "Rec", tipLabel: "project", tipBody: "Recommendation system. Two-tower model and CTR prediction.", href: "/projects/rec-system-ctr", updatedAgo: "6 months ago" },
+    { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Online Retail II big data pipeline. MapReduce on AWS EMR with Hadoop, Pig, and Hive.", href: "/projects/retail-stream-analytics", updatedAgo: "Fall 2025" },
+    { id: "crime", label: "Crime", tipLabel: "project", tipBody: "DC Crime analysis and prediction. Applied ML with Python, scikit-learn, pandas.", href: "/projects/dc-crime-analysis", updatedAgo: "2024" },
   ],
 };
 

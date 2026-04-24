@@ -1,66 +1,108 @@
+export type ProjectFile = {
+  name: string;
+  type: "readme" | "link" | "pdf" | "code";
+  href?: string;
+  external?: boolean;
+  content?: string;
+};
+
+export type ProjectFolder = {
+  name: string;
+  files: ProjectFile[];
+};
+
+export type ProjectStatus = "completed" | "in-progress" | "planned";
+
 export type Project = {
   slug: string;
   name: string;
   title: string;
-  category: string;
-  year: number;
   tagline: string;
+  status: ProjectStatus;
+  featured?: boolean;
   stack: string[];
+  dateRange?: string;
+  tree: ProjectFolder[];
 };
 
 export const projects: Project[] = [
   {
-    slug: "telecom-churn-ml",
-    name: "telecom-churn-ml",
-    title: "Telecom churn prediction pipeline",
-    category: "Flagship",
-    year: 2026,
-    tagline:
-      "End-to-end MLOps pipeline predicting customer churn on telecom subscriber data.",
-    stack: ["Python", "FastAPI", "scikit-learn", "Docker", "AWS", "MLflow"],
-  },
-  {
-    slug: "rag-research-assistant",
-    name: "rag-research-assistant",
-    title: "RAG research assistant",
-    category: "Applied AI",
-    year: 2026,
-    tagline:
-      "Retrieval-augmented Q&A system over ML papers with a real evaluation harness.",
-    stack: ["Python", "LangChain", "Pinecone", "PyTorch"],
-  },
-  {
     slug: "swin-transformer-study",
     name: "swin-transformer-study",
     title: "Swin Transformer study",
-    category: "Research",
-    year: 2025,
-    tagline:
-      "Fine-tuned vision transformer with ablations and baseline comparisons.",
-    stack: ["PyTorch", "CUDA", "Weights & Biases"],
+    tagline: "Empirical investigation of Swin Transformer architectures for fine-grained image classification.",
+    status: "completed",
+    featured: true,
+    stack: ["PyTorch", "Swin-T/S/B", "Oxford-IIIT Pet", "RTX 4090"],
+    dateRange: "May – Dec 2025",
+    tree: [
+      {
+        name: "swin-transformer-study",
+        files: [
+          { name: "README.md", type: "readme", content: "# Swin Transformer study\n\n*Case study coming soon.*" },
+          { name: "source", type: "link", href: "https://github.com/rpmjp", external: true },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "student-management-system",
+    name: "student-management-system",
+    title: "AI-powered Student Management System",
+    tagline: "End-to-end system spanning Java backend, SQL, REST APIs, ML predictions, and cloud deployment.",
+    status: "in-progress",
+    featured: true,
+    stack: ["Java", "SQL", "Python", "REST", "Docker", "AWS"],
+    dateRange: "Starting April 2026",
+    tree: [
+      {
+        name: "student-management-system",
+        files: [
+          { name: "README.md", type: "readme", content: "# AI-powered Student Management System\n\n*In development. Roadmap coming soon.*" },
+        ],
+      },
+    ],
   },
   {
     slug: "retail-stream-analytics",
     name: "retail-stream-analytics",
-    title: "Retail stream analytics",
-    category: "Data engineering",
-    year: 2025,
-    tagline:
-      "Real-time transaction processing with Kafka and Spark Streaming.",
-    stack: ["Kafka", "Spark", "Grafana"],
+    title: "Online Retail II big data pipeline",
+    tagline: "MapReduce analytics on the UCI Online Retail II dataset using AWS EMR, Hadoop, Pig, and Hive.",
+    status: "completed",
+    stack: ["AWS EMR", "Hadoop", "Pig", "Hive"],
+    dateRange: "Fall 2025",
+    tree: [
+      {
+        name: "retail-stream-analytics",
+        files: [
+          { name: "README.md", type: "readme", content: "# Online Retail II big data pipeline\n\n*Case study coming soon.*" },
+        ],
+      },
+    ],
   },
   {
-    slug: "rec-system-ctr",
-    name: "rec-system-ctr",
-    title: "Recommendation system",
-    category: "Applied ML",
-    year: 2025,
-    tagline:
-      "Two-tower recommender and CTR prediction on a public ad-tech dataset.",
-    stack: ["PyTorch", "Pandas", "MLflow"],
+    slug: "dc-crime-analysis",
+    name: "dc-crime-analysis",
+    title: "DC Crime Analysis and Prediction",
+    tagline: "Applied ML on open DC crime data to predict incident type from location and time features.",
+    status: "completed",
+    stack: ["Python", "scikit-learn", "pandas"],
+    dateRange: "2024",
+    tree: [
+      {
+        name: "dc-crime-analysis",
+        files: [
+          { name: "README.md", type: "readme", content: "# DC Crime Analysis\n\n*Case study coming soon.*" },
+        ],
+      },
+    ],
   },
 ];
 
 export function getProject(slug: string): Project | undefined {
   return projects.find((p) => p.slug === slug);
+}
+
+export function getFeaturedProjects(): Project[] {
+  return projects.filter((p) => p.featured);
 }
