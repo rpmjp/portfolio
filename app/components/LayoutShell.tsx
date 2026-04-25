@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import TopBar from "./TopBar";
@@ -26,12 +26,14 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       />
       <div className="flex mx-auto" style={{ minHeight: "calc(100vh - 45px)", maxWidth: "1280px" }}>
         {isProjectPage && currentProject ? (
-          <ProjectSidebar
-            project={currentProject}
-            isOpen={isMobile ? sidebarOpen : true}
-            onClose={() => setSidebarOpen(false)}
-            isMobile={isMobile}
-          />
+          <Suspense fallback={<SidebarFallback />}>
+            <ProjectSidebar
+              project={currentProject}
+              isOpen={isMobile ? sidebarOpen : true}
+              onClose={() => setSidebarOpen(false)}
+              isMobile={isMobile}
+            />
+          </Suspense>
         ) : isMobile ? (
           <Sidebar
             isOpen={sidebarOpen}
@@ -47,5 +49,11 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         </main>
       </div>
     </>
+  );
+}
+
+function SidebarFallback() {
+  return (
+    <aside className="w-60 flex-shrink-0 border-r" style={{ background: "var(--bg-canvas)", borderColor: "var(--border-muted)" }} />
   );
 }
