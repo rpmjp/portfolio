@@ -30,7 +30,7 @@ export default function ActivityCalendar() {
   const router = useRouter();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const { cells, counts, startDate } = useMemo(() => {
+  const { cells, counts } = useMemo(() => {
     const today = new Date();
     const start = new Date(today);
     start.setDate(start.getDate() - 52 * 7 + 1);
@@ -47,7 +47,7 @@ export default function ActivityCalendar() {
       }
     });
 
-    return { cells: cellMap, counts: c, startDate: start };
+    return { cells: cellMap, counts: c };
   }, []);
 
   function handleClick(m: Milestone) {
