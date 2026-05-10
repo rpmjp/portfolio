@@ -54,6 +54,6 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
 function SidebarFallback() {
   return (
-    <aside className="w-60 flex-shrink-0 border-r" style={{ background: "var(--bg-canvas)", borderColor: "var(--border-muted)" }} />
+    <aside className="w-[296px] flex-shrink-0 border-r" style={{ background: "var(--bg-canvas)", borderColor: "var(--border-muted)" }} />
   );
 }
