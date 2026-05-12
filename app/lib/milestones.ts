@@ -11,10 +11,10 @@ export type Milestone = {
 
 export const milestones: Milestone[] = [
   {
-    date: "2024-05-15",
-    title: "DC Crime Analysis project",
+    date: "2025-05-15",
+    title: "DC Crime Analysis paper",
     state: "completed",
-    href: "/projects/dc-crime-analysis",
+    href: "/projects/swin-transformer-study",
   },
   {
     date: "2025-06-20",
@@ -35,11 +35,23 @@ export const milestones: Milestone[] = [
     href: "/projects/retail-stream-analytics",
   },
   {
+    date: "2025-11-18",
+    title: "Rec system CTR writeup",
+    state: "completed",
+    href: "/projects/rec-system-ctr",
+  },
+  {
     date: "2025-12-12",
     title: "Swin ablation study complete",
     description: "300 models trained, paper drafted",
     state: "completed",
     href: "/projects/swin-transformer-study",
+  },
+  {
+    date: "2026-01-22",
+    title: "RAG research assistant",
+    state: "in-progress",
+    href: "/projects/rag-research-assistant",
   },
   {
     date: "2026-02-15",
@@ -48,37 +60,22 @@ export const milestones: Milestone[] = [
     href: "/projects/retail-stream-analytics",
   },
   {
-    date: "2026-04-05",
-    title: "SMS backend scaffolding",
-    description: "Java + Jakarta EE + MySQL schema",
-    state: "completed",
-    href: "/projects/student-management-system",
+    date: "2026-03-08",
+    title: "Telecom churn pipeline",
+    state: "in-progress",
+    href: "/projects/telecom-churn-ml",
   },
   {
-    date: "2026-04-18",
-    title: "SMS auth + role-based portals",
-    description: "AuthFilter, sessions, student vs staff routing",
-    state: "completed",
-    href: "/projects/student-management-system",
-  },
-  {
-    date: "2026-04-25",
-    title: "SMS ML microservice integrated",
-    description: "Random Forest, 96% accuracy, Flask + HTTP bridge",
-    state: "completed",
-    href: "/projects/student-management-system",
-  },
-  {
-    date: "2026-05-01",
+    date: "2026-04-01",
     title: "Portfolio site build",
     state: "in-progress",
   },
   {
-    date: "2026-05-08",
-    title: "SMS dark mode + responsive",
-    description: "CSS custom properties, 3 breakpoints, theme toggle",
-    state: "completed",
-    href: "/projects/student-management-system",
+    date: "2026-04-28",
+    title: "Kaggle competition entry",
+    state: "planned",
+    href: "https://www.kaggle.com/robertmcs",
+    external: true,
   },
   {
     date: "2026-05-10",
@@ -86,10 +83,9 @@ export const milestones: Milestone[] = [
     state: "planned",
   },
   {
-    date: "2026-05-15",
-    title: "Kaggle competition entry",
+    date: "2026-05-20",
+    title: "YouTube walkthrough: churn pipeline",
     state: "planned",
-    href: "https://www.kaggle.com/robertmcs",
     external: true,
   },
 ];
