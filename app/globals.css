@@ -58,3 +58,21 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
+
+.markdown-body h1 { font-size: 22px; font-weight: 600; margin: 0 0 16px; color: var(--fg-default); }
+.markdown-body h2 { font-size: 18px; font-weight: 600; margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 0.5px solid var(--border-muted); color: var(--fg-default); }
+.markdown-body h3 { font-size: 16px; font-weight: 600; margin: 20px 0 10px; color: var(--fg-default); }
+.markdown-body p { margin: 0 0 12px; }
+.markdown-body strong { font-weight: 600; color: var(--fg-default); }
+.markdown-body ul, .markdown-body ol { margin: 0 0 12px; padding-left: 24px; }
+.markdown-body li { margin-bottom: 4px; }
+.markdown-body code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; padding: 2px 5px; border-radius: 4px; background: var(--bg-muted); border: 0.5px solid var(--border-muted); }
+.markdown-body pre { background: var(--bg-muted); border: 0.5px solid var(--border-muted); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 0 0 12px; }
+.markdown-body pre code { background: transparent; border: none; padding: 0; }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 13px; }
+.markdown-body th, .markdown-body td { padding: 8px 12px; border: 0.5px solid var(--border-muted); text-align: left; }
+.markdown-body th { background: var(--bg-muted); font-weight: 600; }
+.markdown-body hr { border: none; border-top: 0.5px solid var(--border-muted); margin: 20px 0; }
+.markdown-body a { color: var(--accent-fg); text-decoration: none; }
+.markdown-body a:hover { text-decoration: underline; }
+.markdown-body blockquote { border-left: 3px solid var(--border-default); padding-left: 12px; margin: 0 0 12px; color: var(--fg-muted); }

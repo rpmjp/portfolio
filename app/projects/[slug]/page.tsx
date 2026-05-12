@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { projects, getProject } from "../../lib/projects";
+import { projects, getProject, type ProjectFile } from "../../lib/projects";
+import ProjectFileRenderer from "../../components/ProjectFileRenderer";
+import LanguagesBar from "../../components/LanguagesBar";
 
 export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
@@ -16,19 +18,44 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
+function findFile(project: ReturnType<typeof getProject>, fileName: string): ProjectFile | undefined {
+  if (!project) return undefined;
+  for (const folder of project.tree) {
+    const found = folder.files.find((f) => f.name === fileName);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+export default async function ProjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ file?: string }>;
+}) {
   const { slug } = await params;
+  const { file: fileParam } = await searchParams;
   const project = getProject(slug);
   if (!project) notFound();
 
+  const selectedFileName = fileParam || "README.md";
+  const selectedFile = findFile(project, selectedFileName);
+
   return (
-    <article className="px-8 py-8 max-w-3xl">
+    <article className="px-8 py-8 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 text-[13px] pb-3 mb-4 border-b font-mono flex-wrap" style={{ color: "var(--fg-muted)", borderColor: "var(--border-muted)" }}>
         <span style={{ color: "var(--accent-fg)" }}>rpmjp</span>
         <span>/</span>
         <span>projects</span>
         <span>/</span>
         <span style={{ color: "var(--fg-default)" }}>{project.slug}</span>
+        {selectedFileName && (
+          <>
+            <span>/</span>
+            <span style={{ color: "var(--fg-default)" }}>{selectedFileName}</span>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -53,18 +80,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         ))}
       </div>
 
-      <div className="rounded-lg p-8 text-center" style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-muted)" }}>
-        <div className="text-[11px] uppercase tracking-wider mb-2" style={{ color: "var(--fg-subtle)" }}>
-          README.md
-        </div>
-        <p className="text-[14px] leading-relaxed" style={{ color: "var(--fg-default)" }}>
-          {project.status === "in-progress"
-            ? "This project is under active development. Detailed case study coming soon."
-            : project.status === "planned"
-            ? "This project is in the planning phase. Check back soon."
-            : "Case study coming soon. In the meantime, the high-level overview above describes the project scope and technologies."}
-        </p>
-      </div>
+{project.languages && <LanguagesBar languages={project.languages} />}
+
+      <ProjectFileRenderer file={selectedFile} fileName={selectedFileName} />
     </article>
   );
 }
