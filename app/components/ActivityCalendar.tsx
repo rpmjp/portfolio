@@ -129,10 +129,10 @@ export default function ActivityCalendar() {
 
               {hoveredMilestone && (
                 <div
-                  className="absolute z-10 pointer-events-none rounded-md px-3 py-2 text-xs shadow-lg"
+                  className="absolute z-10 pointer-events-none rounded-md px-3 py-2 text-xs"
                   style={{
-                    left: `min(${hoveredCellCol * (CELL_SIZE + CELL_GAP)}px, calc(100% - 240px))`,
-                    top: `calc(100% + 12px)`,
+                    left: `min(${hoveredCellCol * (CELL_SIZE + CELL_GAP)}px, calc(100% - 220px))`,
+                    top: hoveredCellRow * (CELL_SIZE + CELL_GAP) - 60,
                     background: "var(--bg-muted)",
                     border: "0.5px solid var(--border-default)",
                     minWidth: 200,
