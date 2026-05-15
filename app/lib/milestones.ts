@@ -11,6 +11,34 @@ export type Milestone = {
 
 export const milestones: Milestone[] = [
   {
+    date: "2025-10-12",
+    title: "Sentinel ML pipeline complete",
+    description: "Calibrated LightGBM on 6.36M PaySim transactions, PR-AUC 0.992",
+    state: "completed",
+    href: "/projects/sentinel",
+  },
+  {
+    date: "2025-11-08",
+    title: "Sentinel FastAPI backend shipped",
+    description: "50+ endpoints, JWT auth, multi-tenant Postgres",
+    state: "completed",
+    href: "/projects/sentinel",
+  },
+  {
+    date: "2025-12-15",
+    title: "Sentinel analyst workspace live",
+    description: "14 React pages, SHAP waterfall, real-time replay",
+    state: "completed",
+    href: "/projects/sentinel",
+  },
+  {
+    date: "2026-01-20",
+    title: "Sentinel MLOps surface complete",
+    description: "Drift monitoring, threshold tuner, hardened CSV upload",
+    state: "completed",
+    href: "/projects/sentinel",
+  },
+  {
     date: "2024-05-15",
     title: "DC Crime Analysis project",
     state: "completed",
