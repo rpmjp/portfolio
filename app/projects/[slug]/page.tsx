@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ExternalLink } from "lucide-react";
 import { projects, getProject, type ProjectFile } from "../../lib/projects";
 import ProjectFileRenderer from "../../components/ProjectFileRenderer";
 import LanguagesBar from "../../components/LanguagesBar";
@@ -71,6 +72,24 @@ export default async function ProjectPage({
       <p className="text-[14px] leading-relaxed mb-6" style={{ color: "var(--fg-muted)" }}>
         {project.tagline}
       </p>
+
+      {project.liveDemoUrl && (
+        <a
+          href={project.liveDemoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-[14px] font-bold transition-opacity hover:opacity-90 mb-6"
+          style={{
+            background: "var(--accent-fg)",
+            color: "#ffffff",
+            textDecoration: "none",
+            boxShadow: "0 0 0 1px rgba(255,255,255,0.16)",
+          }}
+        >
+          LIVE DEMO
+          <ExternalLink size={16} strokeWidth={2.5} />
+        </a>
+      )}
 
       <div className="flex flex-wrap gap-1.5 mb-8">
         {project.stack.map((tech) => (

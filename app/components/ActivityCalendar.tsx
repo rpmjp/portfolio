@@ -1,90 +1,140 @@
 "use client";
 
+import type { MouseEvent } from "react";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { milestones, type Milestone } from "../lib/milestones";
+import Link from "next/link";
+import {
+  buildActivityForRange,
+  getActivityColor,
+  getActivityProjects,
+  intensityFor,
+  type DailyActivity,
+} from "../lib/buildActivity";
 
 const CELL_SIZE = 11;
 const CELL_GAP = 3;
-const MONTH_LABELS = ["May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
+const GRID_WIDTH = 52 * CELL_SIZE + 51 * CELL_GAP;
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const TOTAL_DAYS = 52 * 7;
 
-function getColor(state: Milestone["state"] | "none"): string {
-  if (state === "completed") return "#10b981";
-  if (state === "in-progress") return "#2f81f7";
-  if (state === "planned") return "#d97706";
-  return "var(--bg-muted)";
+type CalendarCell = {
+  date: string;
+  activity?: DailyActivity;
+};
+
+type MonthLabel = {
+  key: string;
+  label: string;
+  column: number;
+};
+
+function toDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-function dateToCellIndex(dateStr: string, startDate: Date): number {
-  const d = new Date(dateStr);
-  const diffMs = d.getTime() - startDate.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0 || diffDays >= 52 * 7) return -1;
-  const week = Math.floor(diffDays / 7);
-  const dow = d.getDay();
-  return week * 7 + dow;
+function formatDate(dateKey: string): string {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 export default function ActivityCalendar() {
-  const router = useRouter();
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
-  const { cells, counts } = useMemo(() => {
+  const { cells, latestActivity, totalUpdates, activeDays, monthLabels } = useMemo(() => {
     const today = new Date();
-    const start = new Date(today);
-    start.setDate(start.getDate() - 52 * 7 + 1);
+    const end = new Date(today);
+    end.setHours(0, 0, 0, 0);
+    end.setDate(end.getDate() + (6 - end.getDay()));
+
+    const start = new Date(end);
+    start.setDate(end.getDate() - TOTAL_DAYS + 1);
     start.setHours(0, 0, 0, 0);
 
-    const cellMap: Record<number, Milestone> = {};
-    const c = { completed: 0, "in-progress": 0, planned: 0 };
-
-    milestones.forEach((m) => {
-      const idx = dateToCellIndex(m.date, start);
-      if (idx >= 0) {
-        cellMap[idx] = m;
-        c[m.state]++;
-      }
+    const activityByDate = buildActivityForRange(start, TOTAL_DAYS);
+    const calendarCells: CalendarCell[] = Array.from({ length: TOTAL_DAYS }).map((_, offset) => {
+      const date = new Date(start);
+      date.setDate(start.getDate() + offset);
+      const dateKey = toDateKey(date);
+      return { date: dateKey, activity: activityByDate[dateKey] };
     });
 
-    return { cells: cellMap, counts: c };
+    const activityDays = Object.values(activityByDate);
+    const updates = activityDays.reduce((sum, day) => sum + day.totalUpdates, 0);
+    const labels: MonthLabel[] = [];
+    const seen = new Set<string>();
+
+    calendarCells.forEach((cell, index) => {
+      const [year, month, day] = cell.date.split("-").map(Number);
+      const isFirstCell = index === 0;
+      const isMonthStart = day === 1;
+      if (!isFirstCell && !isMonthStart) return;
+
+      const key = `${year}-${month}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      labels.push({
+        key,
+        label: new Date(year, month - 1, day).toLocaleDateString("en-US", { month: "short" }),
+        column: Math.floor(index / 7),
+      });
+    });
+
+    return {
+      cells: calendarCells,
+      latestActivity: activityDays.at(-1),
+      totalUpdates: updates,
+      activeDays: activityDays.length,
+      monthLabels: labels,
+    };
   }, []);
 
-  function handleClick(m: Milestone) {
-    if (!m.href) return;
-    if (m.external || m.href.endsWith(".pdf")) {
-      const a = document.createElement("a");
-      a.href = m.href;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.click();
-    } else {
-      router.push(m.href);
-    }
+  const [selectedDate, setSelectedDate] = useState(latestActivity?.date);
+
+  function handleHover(event: MouseEvent<HTMLDivElement>, idx: number) {
+    setHoveredIdx(idx);
+    setTooltipPosition({ x: event.clientX + 12, y: event.clientY - 42 });
   }
 
-  const total = 52 * 7;
-  const hoveredMilestone = hoveredIdx !== null ? cells[hoveredIdx] : null;
-  const hoveredCellCol = hoveredIdx !== null ? Math.floor(hoveredIdx / 7) : 0;
-  const hoveredCellRow = hoveredIdx !== null ? hoveredIdx % 7 : 0;
+  const hoveredActivity = hoveredIdx !== null ? cells[hoveredIdx]?.activity : undefined;
+  const selectedActivity = selectedDate ? cells.find((cell) => cell.date === selectedDate)?.activity : latestActivity;
+  const projectLegend = getActivityProjects();
 
   return (
     <div className="rounded-xl p-5 sm:p-6" style={{ background: "var(--bg-surface)", border: "0.5px solid var(--border-muted)" }}>
       <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
         <div>
-          <div className="text-[11px] uppercase tracking-wider font-medium mb-1" style={{ color: "var(--fg-subtle)" }}>milestones</div>
+          <div className="text-[11px] uppercase tracking-wider font-medium mb-1" style={{ color: "var(--fg-subtle)" }}>build activity</div>
           <div className="text-base font-medium" style={{ color: "var(--fg-default)" }}>What I&apos;ve been building</div>
         </div>
         <div className="text-xs" style={{ color: "var(--fg-muted)" }}>
-          <span style={{ color: "var(--fg-default)", fontWeight: 500 }}>{milestones.length}</span> milestones in the last year
+          <span style={{ color: "var(--fg-default)", fontWeight: 500 }}>{totalUpdates}</span> estimated updates across{" "}
+          <span style={{ color: "var(--fg-default)", fontWeight: 500 }}>{activeDays}</span> active days
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div style={{ minWidth: 720 }}>
-          <div className="flex gap-1 text-[10px] mb-1.5" style={{ color: "var(--fg-subtle)", paddingLeft: 20 }}>
-            {MONTH_LABELS.map((m) => (
-              <div key={m} style={{ width: `calc((100% - ${11 * 4}px) / 12)` }}>{m}</div>
+      <div className="overflow-x-auto overflow-y-hidden">
+        <div style={{ minWidth: GRID_WIDTH + 24 }}>
+          <div className="relative text-[10px] mb-1.5" style={{ color: "var(--fg-subtle)", marginLeft: 20, height: 13, width: GRID_WIDTH }}>
+            {monthLabels.map((month) => (
+              <div
+                key={month.key}
+                className="absolute top-0"
+                style={{ left: month.column * (CELL_SIZE + CELL_GAP) }}
+              >
+                {month.label}
+              </div>
             ))}
           </div>
 
@@ -105,74 +155,147 @@ export default function ActivityCalendar() {
                 gridAutoFlow: "column",
               }}
             >
-              {Array.from({ length: total }).map((_, i) => {
-                const m = cells[i];
-                const state = m ? m.state : "none";
-                const filled = state !== "none";
+              {cells.map((cell, i) => {
+                const filled = !!cell.activity;
+                const isSelected = selectedDate === cell.date;
                 return (
                   <div
-                    key={i}
-                    onMouseEnter={() => filled && setHoveredIdx(i)}
+                    key={cell.date}
+                    onMouseEnter={(event) => filled && handleHover(event, i)}
+                    onMouseMove={(event) => filled && handleHover(event, i)}
                     onMouseLeave={() => setHoveredIdx(null)}
-                    onClick={() => m && handleClick(m)}
+                    onClick={() => filled && setSelectedDate(cell.date)}
                     style={{
-                      background: getColor(state),
+                      background: getActivityColor(cell.activity),
                       borderRadius: 2,
                       cursor: filled ? "pointer" : "default",
-                      boxShadow: filled ? "inset 0 0 0 1px rgba(255,255,255,0.12)" : undefined,
-                      transition: "transform 0.15s",
+                      boxShadow: isSelected
+                        ? "0 0 0 2px var(--fg-default)"
+                        : filled
+                          ? "inset 0 0 0 1px rgba(255,255,255,0.12)"
+                          : undefined,
+                      transition: "transform 0.15s, box-shadow 0.15s",
                       transform: hoveredIdx === i ? "scale(1.25)" : "scale(1)",
                     }}
                   />
                 );
               })}
-
-              {hoveredMilestone && (
-                <div
-                  className="absolute z-10 pointer-events-none rounded-md px-3 py-2 text-xs shadow-lg"
-                  style={{
-                    left: `min(${hoveredCellCol * (CELL_SIZE + CELL_GAP)}px, calc(100% - 240px))`,
-                    top: `calc(100% + 12px)`,
-                    background: "var(--bg-muted)",
-                    border: "0.5px solid var(--border-default)",
-                    minWidth: 200,
-                    maxWidth: 260,
-                    color: "var(--fg-default)",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <div className="text-[10px] uppercase tracking-wider mb-0.5" style={{ color: "var(--fg-muted)" }}>
-                    {hoveredMilestone.state === "completed" ? "completed" : hoveredMilestone.state === "in-progress" ? "in progress" : "planned"} · {new Date(hoveredMilestone.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </div>
-                  <div style={{ color: "var(--fg-default)" }}>{hoveredMilestone.title}</div>
-                  {hoveredMilestone.description && (
-                    <div className="mt-1" style={{ color: "var(--fg-muted)" }}>{hoveredMilestone.description}</div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-4 pt-3 flex-wrap gap-2" style={{ borderTop: "0.5px solid var(--border-muted)" }}>
-        <div className="flex gap-4 text-[11px] items-center flex-wrap" style={{ color: "var(--fg-muted)" }}>
-          <LegendItem color="#10b981" label="Completed" count={counts.completed} />
-          <LegendItem color="#2f81f7" label="In progress" count={counts["in-progress"]} />
-          <LegendItem color="#d97706" label="Planned" count={counts.planned} />
+      <div className="flex justify-between items-center mt-4 pt-3 flex-wrap gap-3" style={{ borderTop: "0.5px solid var(--border-muted)" }}>
+        <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--fg-muted)" }}>
+          <span>Less</span>
+          {[1, 3, 7, 11].map((updates) => (
+            <span
+              key={updates}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 2,
+                background: ["#0d274d", "#174a8b", "#1f6feb", "#58a6ff"][intensityFor(updates)],
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)",
+                display: "inline-block",
+              }}
+            />
+          ))}
+          <span>More</span>
         </div>
-        <span className="text-[11px]" style={{ color: "var(--fg-subtle)" }}>click a square to open</span>
+        <div className="flex items-center gap-3 text-[11px] flex-wrap" style={{ color: "var(--fg-muted)" }}>
+          {projectLegend.map((project) => (
+            <span key={project.id} className="inline-flex items-center gap-1.5">
+              <span style={{ width: 9, height: 9, borderRadius: 2, background: project.color, display: "inline-block" }} />
+              {project.label}
+            </span>
+          ))}
+        </div>
+        <span className="text-[11px]" style={{ color: "var(--fg-subtle)" }}>click a square to inspect the day</span>
       </div>
+
+      <ContributionActivity activity={selectedActivity} />
+
+      {hoveredActivity && (
+        <div
+          className="fixed z-50 pointer-events-none rounded-md px-3 py-2 text-xs shadow-lg"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y,
+            background: "var(--bg-muted)",
+            border: "0.5px solid var(--border-default)",
+            color: "var(--fg-default)",
+            lineHeight: 1.45,
+            maxWidth: 280,
+          }}
+        >
+          <div style={{ color: "var(--fg-default)", fontWeight: 600 }}>
+            {pluralize(hoveredActivity.totalUpdates, "build update")} on {formatDate(hoveredActivity.date)}
+          </div>
+          <div className="mt-1" style={{ color: "var(--fg-muted)" }}>
+            {hoveredActivity.projects.map((project) => project.label).join(", ")}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function LegendItem({ color, label, count }: { color: string; label: string; count: number }) {
+function ContributionActivity({ activity }: { activity?: DailyActivity }) {
+  const maxUpdates = Math.max(...(activity?.projects.map((project) => project.updates) ?? [1]));
+
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <span style={{ width: 10, height: 10, background: color, borderRadius: 2, boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.12)", display: "inline-block" }} />
-      <span>{label}</span>
-      <span style={{ color: "var(--fg-default)", fontWeight: 500 }}>{count}</span>
-    </span>
+    <section className="mt-8">
+      <h3 className="text-[18px] font-medium mb-5" style={{ color: "var(--fg-default)" }}>Contribution activity</h3>
+
+      {!activity ? (
+        <div className="rounded-lg px-4 py-4 text-[13px]" style={{ background: "var(--bg-muted)", border: "0.5px solid var(--border-default)", color: "var(--fg-muted)" }}>
+          Click an active square to inspect that day&apos;s project activity.
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="text-[13px] font-semibold shrink-0" style={{ color: "var(--fg-default)" }}>{formatDate(activity.date)}</div>
+            <div className="h-px flex-1" style={{ background: "var(--border-default)" }} />
+          </div>
+
+          <div className="relative pl-10">
+            <div className="absolute left-[15px] top-0 bottom-0 w-px" style={{ background: "var(--border-default)" }} />
+            <div className="absolute left-0 top-0 w-[31px] h-[31px] rounded-full flex items-center justify-center" style={{ background: "var(--bg-muted)", border: "0.5px solid var(--border-default)", color: "var(--fg-muted)" }}>
+              <span className="text-[15px] leading-none">↗</span>
+            </div>
+
+            <div className="pb-6">
+              <div className="text-[16px] font-medium mb-3" style={{ color: "var(--fg-default)" }}>
+                Created {pluralize(activity.totalUpdates, "build update")} in {pluralize(activity.projects.length, "repository", "repositories")}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {activity.projects.map((project) => (
+                  <div key={project.id} className="grid items-center gap-3" style={{ gridTemplateColumns: "minmax(0, 1fr) 120px" }}>
+                    <div className="min-w-0 text-[13px]">
+                      <Link href={project.href} className="hover:underline" style={{ color: "var(--accent-fg)" }}>
+                        {project.repo}
+                      </Link>
+                      <span className="ml-2" style={{ color: "var(--fg-muted)" }}>{pluralize(project.updates, "update")}</span>
+                      <div className="truncate text-[12px]" style={{ color: "var(--fg-subtle)" }}>{project.focus}</div>
+                    </div>
+                    <div className="h-2 rounded-full overflow-hidden" style={{ background: "var(--bg-muted)" }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.max(14, (project.updates / maxUpdates) * 100)}%`,
+                          background: project.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

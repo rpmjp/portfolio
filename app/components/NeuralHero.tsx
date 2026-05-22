@@ -19,10 +19,11 @@ const projectsBySchool: Record<Education, Project[]> = {
   njit: [
     { id: "sms", label: "SMS", tipLabel: "flagship project", tipBody: "AI-powered Student Management System. Java, SQL, REST, ML predictions, Docker, AWS.", href: "/projects/student-management-system", updatedAgo: "in progress" },
     { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
+    { id: "sentinel", label: "Sentinel", tipLabel: "flagship project", tipBody: "Fraud detection platform with calibrated LightGBM scoring, SHAP explanations, FastAPI, Postgres, and a live React analyst workspace.", href: "/projects/sentinel", updatedAgo: "recently" },
   ],
   rutgers: [
     { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Online Retail II big data pipeline. MapReduce on AWS EMR with Hadoop, Pig, and Hive.", href: "/projects/retail-stream-analytics", updatedAgo: "Fall 2025" },
-    { id: "crime", label: "Crime", tipLabel: "project", tipBody: "DC Crime analysis and prediction. Applied ML with Python, scikit-learn, pandas.", href: "/projects/dc-crime-analysis", updatedAgo: "2024" },
+    { id: "communityshield", label: "Shield", tipLabel: "CommunityShield", tipBody: "Chicago public-safety analytics with MapLibre heatmaps, beat detail, FastAPI, PostGIS rollups, and explainable ML predictions.", href: "/projects/communityshield", updatedAgo: "2025" },
   ],
 };
 
@@ -379,6 +380,7 @@ export default function NeuralHero() {
         style={{
           background: "var(--bg-muted)",
           border: "0.5px solid var(--border-default)",
+          minHeight: 66,
         }}
       >
         <div
@@ -387,7 +389,9 @@ export default function NeuralHero() {
         >
           {preview.tipLabel}
         </div>
-        <div style={{ color: "var(--fg-default)" }}>{preview.tipBody}</div>
+        <div className="truncate" style={{ color: "var(--fg-default)" }} title={preview.tipBody}>
+          {preview.tipBody}
+        </div>
       </div>
     </div>
   );
