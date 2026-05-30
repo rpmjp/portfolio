@@ -17,9 +17,9 @@ type Project = {
 
 const projectsBySchool: Record<Education, Project[]> = {
   njit: [
-    { id: "sms", label: "SMS", tipLabel: "flagship project", tipBody: "AI-powered Student Management System. Java, SQL, REST, ML predictions, Docker, AWS.", href: "/projects/student-management-system", updatedAgo: "in progress" },
-    { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
     { id: "sentinel", label: "Sentinel", tipLabel: "flagship project", tipBody: "Fraud detection platform with calibrated LightGBM scoring, SHAP explanations, FastAPI, Postgres, and a live React analyst workspace.", href: "/projects/sentinel", updatedAgo: "recently" },
+    { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
+    { id: "sms", label: "SMS", tipLabel: "flagship project", tipBody: "AI-powered Student Management System. Java, SQL, REST, ML predictions, Docker, AWS.", href: "/projects/student-management-system", updatedAgo: "in progress" },
   ],
   rutgers: [
     { id: "retail", label: "Retail", tipLabel: "project", tipBody: "Online Retail II big data pipeline. MapReduce on AWS EMR with Hadoop, Pig, and Hive.", href: "/projects/retail-stream-analytics", updatedAgo: "Fall 2025" },
