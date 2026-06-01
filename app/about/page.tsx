@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import RobiWidget from "../components/RobiWidget";
 
 export const metadata: Metadata = {
   title: "About · Robert Jean Pierre",
@@ -100,6 +101,13 @@ export default function AboutPage() {
             Kaggle
           </a>
         </div>
+      </Section>
+
+      <Section title="Ask Robi">
+        <p className="mb-3">
+          Robi is a retrieval-augmented assistant I built. It answers questions about me and my work, grounded in a curated corpus with source citations. Ask it anything.
+        </p>
+        <RobiWidget />
       </Section>
     </article>
   );
