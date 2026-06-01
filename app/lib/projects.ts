@@ -92,7 +92,79 @@ Built end-to-end across Java, Python, and SQL. The Java backend handles business
 - **\`links/github-repo.url\`**: full source on GitHub
 `;
 
+
+const robiReadme = `# Robi: a production RAG assistant
+
+Robi is a retrieval-augmented chatbot that answers questions about me, grounded in a curated corpus with source citations and layered guardrails. It is live on the About page of this site. The backend runs on my own VPS, fronted by Caddy with automatic HTTPS, deployed by a push-to-main pipeline.
+
+This page documents how it works and how it is measured, because the measurement is the point. A toy chatbot pastes a resume into one LLM call. Robi is built and evaluated like a real retrieval system.
+
+## At a glance
+
+| | |
+|---|---|
+| **Retrieval** | Hybrid: pgvector dense + tsvector keyword, reranked |
+| **Recall@1** | 0.971 |
+| **Recall@5** | 0.971 |
+| **MRR** | 0.971 |
+| **Refusal accuracy** | 1.000 (off-topic correctly declined) |
+| **False refusals** | 0.000 |
+| **Faithfulness** | 0.943 (LLM-as-judge) |
+| **Guardrail layers** | 4 |
+| **Embedding model** | BAAI/bge-small-en-v1.5 (self-hosted) |
+| **Generation** | Llama 3.3 70B via Groq |
+
+## Architecture
+
+Two flows. Ingestion runs offline: corpus Markdown is chunked by section, each chunk prefixed with its document title and heading for context, embedded with a self-hosted bge-small model, and upserted into Postgres. It is idempotent via content hash, with a delete path for removed files.
+
+The live query flow: an input guard screens the question, the query is embedded (cached in Redis), hybrid retrieval pulls candidates from both pgvector (dense semantic) and tsvector (keyword), the merged set is reranked by a cross-encoder, a retrieval gate decides whether the top result is relevant enough to answer, and if so the chunks are passed to Llama 3.3 70B with a grounding prompt. Every answer returns source citations.
+
+## The four guardrail layers
+
+Robi is public and unsupervised, so the safety has to hold without a human in the loop.
+
+1. **Input guard.** Length caps and prompt-injection pattern rejection before any work is done.
+2. **Retrieval gate.** If the best reranked score falls below a tuned threshold, Robi refuses rather than answer from weak context. This is the primary anti-hallucination control.
+3. **Grounding prompt.** The model is instructed to answer only from retrieved context, stay on topic, cite sources, and ignore instructions embedded in the question.
+4. **Output handling.** Graceful degradation on provider errors, plus per-request logging.
+
+## How it is evaluated
+
+A golden set of 35 on-topic questions (each labeled with the document that should answer it) and 12 off-topic questions that should be refused. The harness measures retrieval quality (Recall@k, MRR), refusal accuracy, false refusal rate, and faithfulness via an LLM-as-judge check that every claim traces to retrieved context.
+
+The eval is not decoration. It caught two real bugs during development: a keyword-search path that returned nothing for natural-language questions, and a chunk that could not be retrieved because the section body never contained the product name. Both were fixed by adding contextual chunk headers, which lifted Recall@1 from 0.943 to 0.971.
+
+## Monitoring
+
+Prometheus scrapes the app every 15 seconds; Grafana renders an operations dashboard with latency percentiles (p50/p95/p99), per-stage timing, request outcomes, refusal rate, cumulative cost, and errors by component. Datasource, dashboard, and alert rules are all provisioned as code, so the full monitoring stack rebuilds identically on any machine.
+
+## Stack
+
+FastAPI and Python 3.12, Postgres 16 with pgvector and tsvector, Redis for caching and rate limiting, sentence-transformers for embeddings and reranking, Groq for generation. Containerized with Docker Compose, CI via GitHub Actions (lint, tests, build), auto-deploy to a VPS behind Caddy.`;
+
 export const projects: Project[] = [
+  {
+    slug: "robi",
+    name: "robi",
+    title: "Robi: production RAG assistant",
+    tagline: "Retrieval-augmented chatbot with hybrid search, guardrails, eval, and live monitoring.",
+    status: "completed",
+    featured: true,
+    liveDemoUrl: "https://robertjeanpierre.com/about",
+    stack: ["FastAPI", "Python", "Postgres", "pgvector", "Redis", "Groq", "Prometheus", "Grafana", "Docker"],
+    dateRange: "2026",
+    tree: [
+      {
+        name: "robi",
+        files: [
+          { name: "README.md", type: "readme", content: robiReadme },
+          { name: "Ask Robi (live)", type: "link", href: "https://robertjeanpierre.com/about", external: true },
+          { name: "API health", type: "link", href: "https://chat.robertjeanpierre.com/health", external: true },
+        ],
+      },
+    ],
+  },
   {
     slug: "skillbridge",
     name: "skillbridge",
