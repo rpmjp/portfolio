@@ -34,6 +34,13 @@ export default function AboutPage() {
         &ldquo;I spent years watching models make decisions. Now I make the models.&rdquo;
       </blockquote>
 
+      <Section title="Ask Robi">
+        <p className="mb-3">
+          Robi is a retrieval-augmented assistant I built. It answers questions about me and my work, grounded in a curated corpus with source citations. Ask it anything.
+        </p>
+        <RobiWidget />
+      </Section>
+
       <Section title="What I do">
         <p>
           I build ML systems that ship. Full pipelines. Training, evaluation, inference APIs, monitoring, the whole thing. I also do graduate research at NJIT on why neural networks generalize, which keeps my feet in theory while my hands are on production.
@@ -103,12 +110,6 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      <Section title="Ask Robi">
-        <p className="mb-3">
-          Robi is a retrieval-augmented assistant I built. It answers questions about me and my work, grounded in a curated corpus with source citations. Ask it anything.
-        </p>
-        <RobiWidget />
-      </Section>
     </article>
   );
 }

@@ -95,7 +95,7 @@ Built end-to-end across Java, Python, and SQL. The Java backend handles business
 
 const robiReadme = `# Robi: a production RAG assistant
 
-Robi is a retrieval-augmented chatbot that answers questions about me, grounded in a curated corpus with source citations and layered guardrails. It is live on the About page of this site. The backend runs on my own VPS, fronted by Caddy with automatic HTTPS, deployed by a push-to-main pipeline.
+Robi is a retrieval-augmented chatbot that answers questions about me and my work, grounded in a curated corpus with source citations and layered guardrails. It is live on the About page of this site. The backend runs on my own VPS, fronted by Caddy with automatic HTTPS, deployed by a push-to-main pipeline.
 
 This page documents how it works and how it is measured, because the measurement is the point. A toy chatbot pastes a resume into one LLM call. Robi is built and evaluated like a real retrieval system.
 
@@ -113,35 +113,315 @@ This page documents how it works and how it is measured, because the measurement
 | **Guardrail layers** | 4 |
 | **Embedding model** | BAAI/bge-small-en-v1.5 (self-hosted) |
 | **Generation** | Llama 3.3 70B via Groq |
+| **Deployment** | Docker Compose on VPS, Caddy HTTPS |
+| **Monitoring** | Prometheus + Grafana |
 
-## Architecture
+## Why I built this
 
-Two flows. Ingestion runs offline: corpus Markdown is chunked by section, each chunk prefixed with its document title and heading for context, embedded with a self-hosted bge-small model, and upserted into Postgres. It is idempotent via content hash, with a delete path for removed files.
+Most portfolio chatbots are demos. They stuff a resume into a prompt and hope the model behaves. That is useful for a quick prototype, but it is not the system you want answering strangers on the internet.
 
-The live query flow: an input guard screens the question, the query is embedded (cached in Redis), hybrid retrieval pulls candidates from both pgvector (dense semantic) and tsvector (keyword), the merged set is reranked by a cross-encoder, a retrieval gate decides whether the top result is relevant enough to answer, and if so the chunks are passed to Llama 3.3 70B with a grounding prompt. Every answer returns source citations.
+I built Robi to answer a more serious question: what does a small, production RAG system look like when it has to be accurate, refuse weak questions, cite its sources, survive public traffic, and tell me when it is failing?
 
-## The four guardrail layers
+## What makes it different
 
-Robi is public and unsupervised, so the safety has to hold without a human in the loop.
+**It refuses when retrieval is weak.** The retrieval gate is the main anti-hallucination control. If the reranked context is not strong enough, Robi declines instead of stretching.
 
-1. **Input guard.** Length caps and prompt-injection pattern rejection before any work is done.
-2. **Retrieval gate.** If the best reranked score falls below a tuned threshold, Robi refuses rather than answer from weak context. This is the primary anti-hallucination control.
-3. **Grounding prompt.** The model is instructed to answer only from retrieved context, stay on topic, cite sources, and ignore instructions embedded in the question.
-4. **Output handling.** Graceful degradation on provider errors, plus per-request logging.
+**It is measured with a golden set.** Retrieval, refusals, false refusals, and faithfulness are all evaluated. The eval caught real bugs during development and drove changes to chunk headers.
 
-## How it is evaluated
+**It is operated like a service.** Prometheus and Grafana track latency, outcomes, refusal rate, cost, and component errors. The dashboard and alert rules are provisioned as code.
 
-A golden set of 35 on-topic questions (each labeled with the document that should answer it) and 12 off-topic questions that should be refused. The harness measures retrieval quality (Recall@k, MRR), refusal accuracy, false refusal rate, and faithfulness via an LLM-as-judge check that every claim traces to retrieved context.
+## Tech stack
 
-The eval is not decoration. It caught two real bugs during development: a keyword-search path that returned nothing for natural-language questions, and a chunk that could not be retrieved because the section body never contained the product name. Both were fixed by adding contextual chunk headers, which lifted Recall@1 from 0.943 to 0.971.
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python 3.12, FastAPI |
+| Database | PostgreSQL 16 |
+| Vector search | pgvector |
+| Keyword search | PostgreSQL tsvector |
+| Cache / rate limits | Redis |
+| Embeddings | BAAI/bge-small-en-v1.5 |
+| Reranking | sentence-transformers cross-encoder |
+| Generation | Groq, Llama 3.3 70B |
+| Monitoring | Prometheus, Grafana |
+| Reverse proxy | Caddy |
+| Containers | Docker Compose |
+| CI/CD | GitHub Actions, auto-deploy to VPS |
 
-## Monitoring
+## Where to go from here
 
-Prometheus scrapes the app every 15 seconds; Grafana renders an operations dashboard with latency percentiles (p50/p95/p99), per-stage timing, request outcomes, refusal rate, cumulative cost, and errors by component. Datasource, dashboard, and alert rules are all provisioned as code, so the full monitoring stack rebuilds identically on any machine.
+- **architecture.md**: ingestion flow, live query flow, storage, and deployment shape
+- **retrieval-eval.md**: hybrid search, reranking, golden set metrics, and the bugs the eval caught
+- **guardrails.md**: input guard, retrieval gate, grounding prompt, output handling
+- **monitoring.md**: Prometheus, Grafana, latency, refusal rate, cost, and alerts
+- **deployment.md**: Docker Compose, Caddy HTTPS, GitHub Actions, health checks
+- **challenges.md**: the engineering problems that shaped the system
+- **api-reference.md**: live API shape for ask and health endpoints
+- **links/live-demo.url**: ask Robi on the About page
+- **links/api-health.url**: backend health endpoint
+`;
 
-## Stack
+const robiArchitecture = `# Architecture
 
-FastAPI and Python 3.12, Postgres 16 with pgvector and tsvector, Redis for caching and rate limiting, sentence-transformers for embeddings and reranking, Groq for generation. Containerized with Docker Compose, CI via GitHub Actions (lint, tests, build), auto-deploy to a VPS behind Caddy.`;
+Robi has two main flows: offline ingestion and live question answering. The goal is to keep the runtime path small, fast, and measurable while making the corpus easy to update without manual cleanup.
+
+## Offline ingestion
+
+The corpus lives as curated Markdown. During ingestion, documents are split by section so each chunk stays semantically focused. Every chunk is prefixed with its document title and heading before embedding. That small detail matters: the eval found that some chunks were technically correct but hard to retrieve because the body text never repeated the project or topic name.
+
+Each chunk is embedded with a self-hosted BAAI/bge-small-en-v1.5 model and upserted into Postgres. The ingest path is idempotent through content hashing, so unchanged chunks are skipped and changed chunks are replaced cleanly. Removed files have a delete path so stale answers do not linger.
+
+## Live query flow
+
+1. The frontend sends a question to POST /ask.
+2. An input guard checks length and obvious prompt-injection patterns.
+3. The query embedding is computed or loaded from Redis cache.
+4. Dense retrieval pulls semantic candidates from pgvector.
+5. Keyword retrieval pulls lexical candidates from PostgreSQL tsvector.
+6. Candidates are merged and reranked with a cross-encoder.
+7. A retrieval gate checks whether the top context is strong enough.
+8. If retrieval passes, Llama 3.3 70B receives the grounded prompt and retrieved chunks.
+9. The response returns an answer plus source citations.
+
+If retrieval fails, Robi refuses instead of answering from weak context. That is the main design choice that separates the system from a prompt-only chatbot.
+
+## Storage model
+
+Postgres stores the chunk text, document metadata, source URL, content hash, dense embedding, and tsvector field. Keeping dense and keyword search in the same database makes the system simpler to operate than a separate vector service. Redis handles query embedding cache, rate limiting, and short-lived operational state.
+
+## Deployment shape
+
+The backend runs in Docker Compose on a VPS. Caddy terminates HTTPS and routes traffic to the FastAPI service. GitHub Actions runs checks and deploys on push to main. Prometheus scrapes the service and Grafana renders the operations dashboard.
+`;
+
+const robiRetrievalEval = `# Retrieval and Eval
+
+Robi is measured because RAG quality is easy to overestimate by feel. A few good demo questions can hide weak retrieval, false confidence, and missing refusal behavior.
+
+## Retrieval strategy
+
+Robi uses hybrid retrieval:
+
+| Stage | Purpose |
+|-------|---------|
+| pgvector dense search | Finds semantically similar chunks even when wording differs |
+| PostgreSQL tsvector search | Preserves exact names, project titles, tools, and acronyms |
+| Merge | Combines dense and lexical candidates |
+| Cross-encoder rerank | Scores candidates against the actual question |
+| Retrieval gate | Decides whether context is strong enough to answer |
+
+Dense search handles natural language. Keyword search protects proper nouns. Reranking keeps the final context small and relevant.
+
+## Metrics
+
+| Metric | Result |
+|--------|--------|
+| Recall@1 | 0.971 |
+| Recall@5 | 0.971 |
+| MRR | 0.971 |
+| Refusal accuracy | 1.000 |
+| False refusals | 0.000 |
+| Faithfulness | 0.943 |
+
+The golden set has 35 on-topic questions labeled with the source document that should answer them, plus 12 off-topic questions that should be refused.
+
+## What the eval caught
+
+The eval caught two real bugs during development.
+
+**Keyword search returned nothing for natural-language questions.** Dense retrieval still worked, but the hybrid path was weaker than it looked. Fixing the keyword query path made exact-match recall useful again.
+
+**One chunk could not be retrieved because the body lacked the product name.** The content was correct, but the retriever had no lexical clue that the section belonged to the project being asked about. Adding contextual chunk headers fixed it and lifted Recall@1 from 0.943 to 0.971.
+
+## Faithfulness check
+
+Faithfulness is checked with an LLM-as-judge pass that asks whether the answer's claims are supported by retrieved context. It is not treated as perfect truth. It is a regression signal that helps catch obvious unsupported claims before they ship.
+
+## Why refusal metrics matter
+
+For a public assistant, wrong answers are worse than no answer. Refusal accuracy measures whether Robi declines off-topic questions. False refusal rate checks the opposite failure mode: declining valid questions it should answer. Both matter because a RAG system needs to be useful and restrained at the same time.
+`;
+
+const robiGuardrails = `# Guardrails
+
+Robi is public and unsupervised, so the safety model has to work without a human approving each answer. The guardrails are layered because no single check is enough.
+
+## 1. Input guard
+
+The first layer rejects questions that should not reach retrieval or generation. It applies length caps and prompt-injection pattern checks before doing more expensive work.
+
+This protects the system from obvious abuse and keeps provider calls focused on legitimate questions about me and my work.
+
+## 2. Retrieval gate
+
+The retrieval gate is the most important anti-hallucination control. After hybrid search and reranking, Robi checks whether the best candidate clears a tuned relevance threshold.
+
+If the score is too weak, Robi refuses. It does not ask the model to improvise from thin context. This makes the assistant feel more conservative, but it keeps the answers grounded.
+
+## 3. Grounding prompt
+
+The generation prompt tells the model to answer only from retrieved context, stay on topic, cite sources, and ignore instructions embedded in the user's question. The prompt is not the only defense, but it is the final instruction layer before generation.
+
+## 4. Output handling
+
+Provider errors degrade gracefully. The frontend shows a plain unavailable message instead of exposing stack traces or internal details. Each request is logged with outcome and component timing so failures can be inspected later.
+
+## Design tradeoff
+
+Robi is intentionally cautious. A portfolio assistant should not pretend to know things it cannot retrieve. The user experience is better when the assistant says it cannot answer than when it invents a confident answer about a real person.
+`;
+
+const robiMonitoring = `# Monitoring
+
+Robi has monitoring because public AI systems need more than a green deploy. The system tracks whether it is fast, whether it is refusing too much, whether errors are isolated to one component, and how much generation is costing.
+
+## Metrics collected
+
+Prometheus scrapes the backend every 15 seconds. The dashboard tracks:
+
+- Request volume
+- Request outcome
+- p50, p95, and p99 latency
+- Per-stage timing
+- Refusal rate
+- Provider errors
+- Retrieval errors
+- Cumulative cost
+- Errors by component
+
+## Grafana as code
+
+Grafana datasource, dashboard, and alert rules are provisioned as code. Rebuilding the stack recreates the same monitoring surface instead of relying on manual dashboard setup.
+
+## What I watch
+
+**Latency:** RAG has multiple stages, so total latency alone is not enough. Per-stage timing shows whether embedding, retrieval, reranking, generation, or provider response time is the bottleneck.
+
+**Refusal rate:** A sudden jump can mean the retrieval threshold is too strict, the corpus changed, or the retriever is failing. A sudden drop can be worse because it may mean Robi is answering when it should refuse.
+
+**Cost:** Generation is external, so cost is part of operations. Tracking cumulative cost makes unexpected traffic visible.
+
+**Component errors:** Splitting errors by component makes failures actionable. A provider outage, Redis issue, retrieval failure, and app exception should not all look the same.
+`;
+
+const robiDeployment = `# Deployment
+
+Robi runs as a small production service rather than a local demo. The deployment is designed to be boring: containerized services, HTTPS by default, health checks, and repeatable deploys.
+
+## Runtime
+
+The backend runs on a VPS with Docker Compose. FastAPI serves the API, Postgres stores the retrieval corpus, Redis handles cache and rate limits, Prometheus scrapes metrics, and Grafana renders the dashboard.
+
+## HTTPS and routing
+
+Caddy sits in front of the service and handles automatic HTTPS. Public traffic goes through chat.robertjeanpierre.com, while the portfolio frontend talks to the /ask endpoint from the About page widget.
+
+## CI/CD
+
+GitHub Actions runs checks and deploys on push to main. The deploy path rebuilds the service and restarts the stack so code, corpus updates, monitoring config, and API changes move together.
+
+## Health checks
+
+The public health endpoint confirms the backend is reachable. It gives a simple operational signal that the service is up behind the reverse proxy.
+
+## Why not serverless
+
+Robi uses Postgres with pgvector, Redis, Prometheus, Grafana, and model-side retrieval components. A VPS keeps those pieces close together and makes the full stack observable. For this project, operational control mattered more than serverless convenience.
+`;
+
+const robiChallenges = `# Challenges
+
+Robi looked small from the outside, but the hard parts were the same ones that show up in larger RAG systems: retrieval quality, refusal behavior, prompt safety, and observability.
+
+## 1. Making retrieval measurable
+
+**Challenge:** It is easy to test a chatbot by asking a few questions and deciding it feels good. That does not catch regressions.
+
+**Solution:** Built a golden set with on-topic questions mapped to source documents and off-topic questions that should be refused. The eval reports Recall@1, Recall@5, MRR, refusal accuracy, false refusals, and faithfulness.
+
+**What I learned:** RAG systems need tests that look like product behavior, not just unit tests. Retrieval quality is a contract.
+
+## 2. Hybrid retrieval was only half working
+
+**Challenge:** The keyword retrieval path returned nothing for some natural-language questions. Dense search covered it enough that the bug was not obvious during casual testing.
+
+**Solution:** The eval exposed the gap. I fixed the keyword path so dense and lexical retrieval both contribute candidates before reranking.
+
+**What I learned:** Hybrid search has to be evaluated as a whole pipeline and as separate components. Otherwise one side can silently stop helping.
+
+## 3. Context-free chunks were hard to retrieve
+
+**Challenge:** One section contained the right answer but did not include the product name in the body. The retriever could not reliably connect it to questions about that product.
+
+**Solution:** Prefix each chunk with its document title and heading before embedding and indexing.
+
+**What I learned:** Chunk text needs context. A human sees the file and heading around a paragraph; the retriever only sees the chunk.
+
+## 4. Refusal threshold tuning
+
+**Challenge:** A threshold that is too low increases hallucination risk. A threshold that is too high makes the assistant refuse valid questions.
+
+**Solution:** Tuned the retrieval gate against both on-topic and off-topic questions, tracking refusal accuracy and false refusals together.
+
+**What I learned:** Refusal is part of the product. It should be tuned and measured like any other behavior.
+
+## 5. Public deployment needs observability
+
+**Challenge:** Once Robi is live, failures are not just local exceptions. They can be provider latency, retrieval errors, Redis issues, threshold drift, or unexpected traffic.
+
+**Solution:** Added Prometheus and Grafana with latency percentiles, per-stage timing, outcomes, refusal rate, cost, and component errors.
+
+**What I learned:** Monitoring is not extra polish. For an AI service, it is how you know whether the system is still behaving.
+`;
+
+const robiApiReference = `# API Reference
+
+Robi exposes a small public API behind chat.robertjeanpierre.com. The portfolio widget currently uses the ask endpoint, and the project page links to the health endpoint.
+
+## POST /ask
+
+Ask Robi a question.
+
+### Request
+
+~~~json
+{
+  "question": "Tell me about SkillBridge"
+}
+~~~
+
+### Response
+
+~~~json
+{
+  "answer": "SkillBridge is ...",
+  "sources": [
+    {
+      "title": "SkillBridge",
+      "url": "https://robertjeanpierre.com/projects/skillbridge",
+      "slug": "skillbridge"
+    }
+  ]
+}
+~~~
+
+### Behavior
+
+- On strong retrieval, Robi answers from retrieved context and returns citations.
+- On weak retrieval, Robi refuses instead of hallucinating.
+- On provider or backend failure, the frontend shows a graceful unavailable message.
+
+## GET /health
+
+Checks whether the backend is reachable behind Caddy.
+
+### Response shape
+
+The endpoint returns a small health payload suitable for uptime checks and manual verification.
+
+## Frontend integration
+
+The portfolio widget sends a JSON request to POST /ask and renders returned sources as links below the answer. Suggested prompts provide low-friction starting points, but the input accepts any question.
+`;
 
 export const projects: Project[] = [
   {
@@ -159,6 +439,13 @@ export const projects: Project[] = [
         name: "robi",
         files: [
           { name: "README.md", type: "readme", content: robiReadme },
+          { name: "architecture.md", type: "readme", content: robiArchitecture },
+          { name: "retrieval-eval.md", type: "readme", content: robiRetrievalEval },
+          { name: "guardrails.md", type: "readme", content: robiGuardrails },
+          { name: "monitoring.md", type: "readme", content: robiMonitoring },
+          { name: "deployment.md", type: "readme", content: robiDeployment },
+          { name: "challenges.md", type: "readme", content: robiChallenges },
+          { name: "api-reference.md", type: "readme", content: robiApiReference },
           { name: "Ask Robi (live)", type: "link", href: "https://robertjeanpierre.com/about", external: true },
           { name: "API health", type: "link", href: "https://chat.robertjeanpierre.com/health", external: true },
         ],
