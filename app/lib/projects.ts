@@ -434,6 +434,15 @@ export const projects: Project[] = [
     liveDemoUrl: "https://robertjeanpierre.com/about",
     stack: ["FastAPI", "Python", "Postgres", "pgvector", "Redis", "Groq", "Prometheus", "Grafana", "Docker"],
     dateRange: "2026",
+    activity: {
+      start: "2026-05-01",
+      end: "2026-06-01",
+      baseUpdates: 4,
+      activeRatio: 0.72,
+      color: "#a371f7",
+      colors: ["#231a36", "#3d2a63", "#6e40c9", "#a371f7"],
+      focus: ["RAG backend", "retrieval evals", "guardrails", "monitoring", "portfolio integration"],
+    },
     tree: [
       {
         name: "robi",

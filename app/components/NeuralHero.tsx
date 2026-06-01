@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Stage = 0 | 1 | 2;
-type Education = "njit" | "rutgers";
+type ProjectGroup = "solo" | "njit" | "rutgers";
 
 type Project = {
   id: string;
@@ -15,7 +15,10 @@ type Project = {
   updatedAgo: string;
 };
 
-const projectsBySchool: Record<Education, Project[]> = {
+const projectsByGroup: Record<ProjectGroup, Project[]> = {
+  solo: [
+    { id: "robi", label: "Robi", tipLabel: "production RAG", tipBody: "Retrieval-augmented assistant with hybrid search, guardrails, evals, monitoring, and a live About-page widget.", href: "/projects/robi", updatedAgo: "today" },
+  ],
   njit: [
     { id: "sentinel", label: "Sentinel", tipLabel: "flagship project", tipBody: "Fraud detection platform with calibrated LightGBM scoring, SHAP explanations, FastAPI, Postgres, and a live React analyst workspace.", href: "/projects/sentinel", updatedAgo: "recently" },
     { id: "swin", label: "Swin", tipLabel: "research", tipBody: "Swin Transformer study. 300+ models trained on RTX 4090, with ablations.", href: "/projects/swin-transformer-study", updatedAgo: "3 weeks ago" },
@@ -27,16 +30,18 @@ const projectsBySchool: Record<Education, Project[]> = {
   ],
 };
 
-const schoolInfo: Record<Education, { label: string; tipLabel: string; tipBody: string }> = {
+const groupInfo: Record<ProjectGroup, { label: string; tipLabel: string; tipBody: string }> = {
+  solo: { label: "Solo", tipLabel: "independent work", tipBody: "Self-directed production projects built outside coursework, starting with Robi." },
   njit: { label: "NJIT", tipLabel: "graduate studies", tipBody: "M.S. Computer Science. 3.9 GPA. Expected May 2026. Focus on deep learning and applied ML." },
   rutgers: { label: "Rutgers", tipLabel: "undergraduate", tipBody: "B.S. from Rutgers. Foundation in CS and software engineering." },
 };
 
 const POS = {
   rjpStage1: { x: 100, y: 220 },
-  schoolStage1Njit: { x: 460, y: 150 },
-  schoolStage1Rutgers: { x: 460, y: 290 },
-  schoolAnchorStage2: { x: 200, y: 220 },
+  groupStage1Solo: { x: 460, y: 80 },
+  groupStage1Njit: { x: 460, y: 200 },
+  groupStage1Rutgers: { x: 460, y: 320 },
+  groupAnchorStage2: { x: 200, y: 220 },
   projectX: 580,
   outputX: 810,
   outputY: 220,
@@ -50,7 +55,7 @@ const R = {
 
 export default function NeuralHero() {
   const [stage, setStage] = useState<Stage>(0);
-  const [selectedSchool, setSelectedSchool] = useState<Education | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<ProjectGroup | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const router = useRouter();
 
@@ -58,8 +63,8 @@ export default function NeuralHero() {
     if (stage === 0) setStage(1);
   }
 
-  function handleSchoolClick(school: Education) {
-    setSelectedSchool(school);
+  function handleGroupClick(group: ProjectGroup) {
+    setSelectedGroup(group);
     setStage(2);
     setHoveredId(null);
   }
@@ -71,7 +76,7 @@ export default function NeuralHero() {
   function handleBack() {
     if (stage === 2) {
       setStage(1);
-      setSelectedSchool(null);
+      setSelectedGroup(null);
       setHoveredId(null);
     } else if (stage === 1) {
       setStage(0);
@@ -87,12 +92,12 @@ export default function NeuralHero() {
     a.click();
   }
 
-  const currentProjects = selectedSchool ? projectsBySchool[selectedSchool] : [];
+  const currentProjects = selectedGroup ? projectsByGroup[selectedGroup] : [];
 
   const caption = (() => {
-    if (stage === 0) return "click an education node to explore";
-    if (stage === 1) return "click an education node to continue";
-    if (stage === 2) return `projects at ${schoolInfo[selectedSchool!].label}`;
+    if (stage === 0) return "click a node to explore";
+    if (stage === 1) return "click a node to continue";
+    if (stage === 2) return `projects from ${groupInfo[selectedGroup!].label}`;
     return "";
   })();
 
@@ -101,32 +106,32 @@ export default function NeuralHero() {
       const p = currentProjects.find((x) => x.id === hoveredId);
       if (p) return { tipLabel: p.tipLabel, tipBody: p.tipBody };
     }
-    if ((stage === 0 || stage === 1) && hoveredId && (hoveredId === "njit" || hoveredId === "rutgers")) {
-      return { tipLabel: schoolInfo[hoveredId].tipLabel, tipBody: schoolInfo[hoveredId].tipBody };
+    if ((stage === 0 || stage === 1) && hoveredId && (hoveredId === "solo" || hoveredId === "njit" || hoveredId === "rutgers")) {
+      return { tipLabel: groupInfo[hoveredId].tipLabel, tipBody: groupInfo[hoveredId].tipBody };
     }
-    if (stage === 2 && selectedSchool) {
-      return { tipLabel: `at ${schoolInfo[selectedSchool].label.toLowerCase()}`, tipBody: "Hover a project for details. Click to open the case study." };
+    if (stage === 2 && selectedGroup) {
+      return { tipLabel: `from ${groupInfo[selectedGroup].label.toLowerCase()}`, tipBody: "Hover a project for details. Click to open the case study." };
     }
     if (stage === 0 || stage === 1) {
-      return { tipLabel: "education", tipBody: "Click NJIT or Rutgers to see what I built there." };
+      return { tipLabel: "project paths", tipBody: "Click Solo, NJIT, or Rutgers to see what I built there." };
     }
-    return { tipLabel: "start", tipBody: "Click an education node to drill in." };
+    return { tipLabel: "start", tipBody: "Click a node to drill in." };
   })();
 
-  const njitPos = stage === 2 && selectedSchool === "njit" ? POS.schoolAnchorStage2 : POS.schoolStage1Njit;
-  const rutgersPos = stage === 2 && selectedSchool === "rutgers" ? POS.schoolAnchorStage2 : POS.schoolStage1Rutgers;
+  const soloPos = stage === 2 && selectedGroup === "solo" ? POS.groupAnchorStage2 : POS.groupStage1Solo;
+  const njitPos = stage === 2 && selectedGroup === "njit" ? POS.groupAnchorStage2 : POS.groupStage1Njit;
+  const rutgersPos = stage === 2 && selectedGroup === "rutgers" ? POS.groupAnchorStage2 : POS.groupStage1Rutgers;
 
-  // Education nodes now visible at stage 0 too
-  const njitOpacity = stage === 2 && selectedSchool !== "njit" ? 0 : 1;
-  const rutgersOpacity = stage === 2 && selectedSchool !== "rutgers" ? 0 : 1;
+  const soloOpacity = stage === 2 && selectedGroup !== "solo" ? 0 : 1;
+  const njitOpacity = stage === 2 && selectedGroup !== "njit" ? 0 : 1;
+  const rutgersOpacity = stage === 2 && selectedGroup !== "rutgers" ? 0 : 1;
 
   const rjpOpacity = stage === 2 ? 0 : 1;
   const rjpPointerEvents = stage === 2 ? "none" : "auto";
 
-  // Lines from RJP to schools visible at stage 0 and stage 1
-  const eduLinesVisible = stage === 0 || stage === 1;
+  const groupLinesVisible = stage === 0 || stage === 1;
 
-  const schoolAnchorPos = selectedSchool ? POS.schoolAnchorStage2 : POS.schoolStage1Njit;
+  const groupAnchorPos = selectedGroup ? POS.groupAnchorStage2 : POS.groupStage1Njit;
 
   return (
     <div className="w-full mx-auto" style={{ maxWidth: "min(100%, 1020px)" }}>
@@ -174,14 +179,36 @@ export default function NeuralHero() {
             </radialGradient>
           </defs>
 
-          {/* RJP -> NJIT and RJP -> Rutgers lines, visible at stage 0 and 1 */}
-          {eduLinesVisible && (
+          {groupLinesVisible && (
             <g>
               <line
                 x1={POS.rjpStage1.x}
                 y1={POS.rjpStage1.y}
-                x2={POS.schoolStage1Njit.x}
-                y2={POS.schoolStage1Njit.y}
+                x2={POS.groupStage1Solo.x}
+                y2={POS.groupStage1Solo.y}
+                stroke={hoveredId === "solo" ? "var(--accent-fg)" : "var(--border-default)"}
+                strokeWidth={hoveredId === "solo" ? 2 : 1.25}
+                opacity={hoveredId === "solo" ? 0.9 : 0.5}
+                style={{ transition: "opacity 0.3s, stroke 0.3s, stroke-width 0.3s" }}
+              />
+              <circle
+                r={hoveredId === "solo" ? 4 : 2.5}
+                fill={hoveredId === "solo" ? "var(--accent-fg)" : "var(--fg-muted)"}
+                opacity={hoveredId === "solo" ? 1 : 0.55}
+                style={{ transition: "r 0.3s, opacity 0.3s, fill 0.3s" }}
+              >
+                <animateMotion
+                  dur={hoveredId === "solo" ? "1.2s" : "2.8s"}
+                  repeatCount="indefinite"
+                  path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.groupStage1Solo.x},${POS.groupStage1Solo.y}`}
+                />
+              </circle>
+
+              <line
+                x1={POS.rjpStage1.x}
+                y1={POS.rjpStage1.y}
+                x2={POS.groupStage1Njit.x}
+                y2={POS.groupStage1Njit.y}
                 stroke={hoveredId === "njit" ? "var(--accent-fg)" : "var(--border-default)"}
                 strokeWidth={hoveredId === "njit" ? 2 : 1.25}
                 opacity={hoveredId === "njit" ? 0.9 : 0.5}
@@ -196,15 +223,15 @@ export default function NeuralHero() {
                 <animateMotion
                   dur={hoveredId === "njit" ? "1.2s" : "3.2s"}
                   repeatCount="indefinite"
-                  path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.schoolStage1Njit.x},${POS.schoolStage1Njit.y}`}
+                  path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.groupStage1Njit.x},${POS.groupStage1Njit.y}`}
                 />
               </circle>
 
               <line
                 x1={POS.rjpStage1.x}
                 y1={POS.rjpStage1.y}
-                x2={POS.schoolStage1Rutgers.x}
-                y2={POS.schoolStage1Rutgers.y}
+                x2={POS.groupStage1Rutgers.x}
+                y2={POS.groupStage1Rutgers.y}
                 stroke={hoveredId === "rutgers" ? "var(--accent-fg)" : "var(--border-default)"}
                 strokeWidth={hoveredId === "rutgers" ? 2 : 1.25}
                 opacity={hoveredId === "rutgers" ? 0.9 : 0.5}
@@ -219,13 +246,13 @@ export default function NeuralHero() {
                 <animateMotion
                   dur={hoveredId === "rutgers" ? "1.2s" : "3.6s"}
                   repeatCount="indefinite"
-                  path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.schoolStage1Rutgers.x},${POS.schoolStage1Rutgers.y}`}
+                  path={`M${POS.rjpStage1.x},${POS.rjpStage1.y} L${POS.groupStage1Rutgers.x},${POS.groupStage1Rutgers.y}`}
                 />
               </circle>
             </g>
           )}
 
-          {stage === 2 && selectedSchool && (
+          {stage === 2 && selectedGroup && (
             <g>
               {currentProjects.map((p, i) => {
                 const spacing = 460 / (currentProjects.length + 1);
@@ -234,8 +261,8 @@ export default function NeuralHero() {
                 return (
                   <g key={`edge-${p.id}`}>
                     <line
-                      x1={schoolAnchorPos.x}
-                      y1={schoolAnchorPos.y}
+                      x1={groupAnchorPos.x}
+                      y1={groupAnchorPos.y}
                       x2={POS.projectX}
                       y2={py}
                       stroke={isHovered ? "var(--accent-fg)" : "var(--border-default)"}
@@ -252,7 +279,7 @@ export default function NeuralHero() {
                       <animateMotion
                         dur={isHovered ? "1.2s" : `${3 + i * 0.4}s`}
                         repeatCount="indefinite"
-                        path={`M${schoolAnchorPos.x},${schoolAnchorPos.y} L${POS.projectX},${py}`}
+                        path={`M${groupAnchorPos.x},${groupAnchorPos.y} L${POS.projectX},${py}`}
                       />
                     </circle>
                   </g>
@@ -277,19 +304,48 @@ export default function NeuralHero() {
           </g>
 
           <g
+            style={{ cursor: soloOpacity > 0 ? "pointer" : "default", opacity: soloOpacity, transition: "opacity 0.5s" }}
+            pointerEvents={soloOpacity > 0 ? "auto" : "none"}
+            onMouseEnter={() => setHoveredId("solo")}
+            onMouseLeave={() => setHoveredId(null)}
+            onClick={() => (stage === 0 || stage === 1) && handleGroupClick("solo")}
+          >
+            <circle
+              cx={soloPos.x}
+              cy={soloPos.y}
+              r={R.mid}
+              fill="var(--bg-canvas)"
+              stroke={hoveredId === "solo" || (stage === 2 && selectedGroup === "solo") ? "var(--accent-fg)" : "var(--border-default)"}
+              strokeWidth={hoveredId === "solo" || (stage === 2 && selectedGroup === "solo") ? 2.5 : 1.5}
+              style={{ transition: "cx 0.6s cubic-bezier(0.4,0,0.2,1), cy 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.2s, stroke-width 0.2s" }}
+            />
+            <text
+              x={soloPos.x}
+              y={soloPos.y + 7}
+              textAnchor="middle"
+              fill="var(--fg-default)"
+              fontSize={18}
+              fontWeight={stage === 2 && selectedGroup === "solo" ? 500 : 400}
+              style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1), y 0.6s cubic-bezier(0.4,0,0.2,1)" }}
+            >
+              Solo
+            </text>
+          </g>
+
+          <g
             style={{ cursor: njitOpacity > 0 ? "pointer" : "default", opacity: njitOpacity, transition: "opacity 0.5s" }}
             pointerEvents={njitOpacity > 0 ? "auto" : "none"}
             onMouseEnter={() => setHoveredId("njit")}
             onMouseLeave={() => setHoveredId(null)}
-            onClick={() => (stage === 0 || stage === 1) && handleSchoolClick("njit")}
+            onClick={() => (stage === 0 || stage === 1) && handleGroupClick("njit")}
           >
             <circle
               cx={njitPos.x}
               cy={njitPos.y}
               r={R.mid}
               fill="var(--bg-canvas)"
-              stroke={hoveredId === "njit" || (stage === 2 && selectedSchool === "njit") ? "var(--accent-fg)" : "var(--border-default)"}
-              strokeWidth={hoveredId === "njit" || (stage === 2 && selectedSchool === "njit") ? 2.5 : 1.5}
+              stroke={hoveredId === "njit" || (stage === 2 && selectedGroup === "njit") ? "var(--accent-fg)" : "var(--border-default)"}
+              strokeWidth={hoveredId === "njit" || (stage === 2 && selectedGroup === "njit") ? 2.5 : 1.5}
               style={{ transition: "cx 0.6s cubic-bezier(0.4,0,0.2,1), cy 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.2s, stroke-width 0.2s" }}
             />
             <text
@@ -298,7 +354,7 @@ export default function NeuralHero() {
               textAnchor="middle"
               fill="var(--fg-default)"
               fontSize={19}
-              fontWeight={stage === 2 && selectedSchool === "njit" ? 500 : 400}
+              fontWeight={stage === 2 && selectedGroup === "njit" ? 500 : 400}
               style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1), y 0.6s cubic-bezier(0.4,0,0.2,1)" }}
             >
               NJIT
@@ -310,15 +366,15 @@ export default function NeuralHero() {
             pointerEvents={rutgersOpacity > 0 ? "auto" : "none"}
             onMouseEnter={() => setHoveredId("rutgers")}
             onMouseLeave={() => setHoveredId(null)}
-            onClick={() => (stage === 0 || stage === 1) && handleSchoolClick("rutgers")}
+            onClick={() => (stage === 0 || stage === 1) && handleGroupClick("rutgers")}
           >
             <circle
               cx={rutgersPos.x}
               cy={rutgersPos.y}
               r={R.mid}
               fill="var(--bg-canvas)"
-              stroke={hoveredId === "rutgers" || (stage === 2 && selectedSchool === "rutgers") ? "var(--accent-fg)" : "var(--border-default)"}
-              strokeWidth={hoveredId === "rutgers" || (stage === 2 && selectedSchool === "rutgers") ? 2.5 : 1.5}
+              stroke={hoveredId === "rutgers" || (stage === 2 && selectedGroup === "rutgers") ? "var(--accent-fg)" : "var(--border-default)"}
+              strokeWidth={hoveredId === "rutgers" || (stage === 2 && selectedGroup === "rutgers") ? 2.5 : 1.5}
               style={{ transition: "cx 0.6s cubic-bezier(0.4,0,0.2,1), cy 0.6s cubic-bezier(0.4,0,0.2,1), stroke 0.2s, stroke-width 0.2s" }}
             />
             <text
@@ -327,14 +383,14 @@ export default function NeuralHero() {
               textAnchor="middle"
               fill="var(--fg-default)"
               fontSize={16}
-              fontWeight={stage === 2 && selectedSchool === "rutgers" ? 500 : 400}
+              fontWeight={stage === 2 && selectedGroup === "rutgers" ? 500 : 400}
               style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1), y 0.6s cubic-bezier(0.4,0,0.2,1)" }}
             >
               Rutgers
             </text>
           </g>
 
-          {stage === 2 && selectedSchool && (
+          {stage === 2 && selectedGroup && (
             <g>
               {currentProjects.map((p, i) => {
                 const spacing = 460 / (currentProjects.length + 1);
@@ -368,7 +424,7 @@ export default function NeuralHero() {
 
           <g fontSize="13" fill="var(--fg-subtle)" fontWeight={500}>
             <text x={100} y={430} textAnchor="middle" opacity={stage === 2 ? 0.3 : 1} style={{ transition: "opacity 0.5s" }}>input</text>
-            <text x={stage === 2 ? POS.schoolAnchorStage2.x : POS.schoolStage1Njit.x} y={430} textAnchor="middle" style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1)" }}>{stage === 2 ? schoolInfo[selectedSchool!].label.toLowerCase() : "education"}</text>
+            <text x={stage === 2 ? POS.groupAnchorStage2.x : POS.groupStage1Njit.x} y={430} textAnchor="middle" style={{ transition: "x 0.6s cubic-bezier(0.4,0,0.2,1)" }}>{stage === 2 ? groupInfo[selectedGroup!].label.toLowerCase() : "path"}</text>
             <text x={POS.projectX} y={430} textAnchor="middle" opacity={stage === 2 ? 1 : 0} style={{ transition: "opacity 0.5s" }}>projects</text>
             <text x={POS.outputX} y={430} textAnchor="middle">output</text>
           </g>
